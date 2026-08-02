@@ -1,17 +1,21 @@
 {
-  "name": "bff",
+  "name": "arcgis-backend",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "type": "module",
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
+  "keywords": ["arcgis", "rest-api", "map", "outlets"],
+  "author": "",
+  "license": "ISC",
+  "description": "Backend server that simulates ArcGIS Online REST API for Outlets management",
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }
