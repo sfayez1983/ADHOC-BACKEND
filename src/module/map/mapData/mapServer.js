@@ -23,7 +23,7 @@
  */
 
 import Router from 'express';
-import {serviceInfo } from './mapData.js'
+import {serviceInfo, layerInfo, outletFeatures } from './mapData.js'
 
 const mapServerRouter = Router()
 
@@ -65,6 +65,34 @@ mapServerRouter.get('/', (req, res) => {
   // Return the service info
   // This matches ArcGIS REST API response format exactly
   res.json(serviceInfo);
+});
+
+mapServerRouter.get('/MapServer/0', (req, res) => {
+  // ArcGIS supports ?f=json parameter
+  // We always return JSON since this is our format
+  const format = req.query.f || 'json';
+
+  // Log the request for debugging
+  console.log('[API #2 - MapServer/0] Request received');
+  console.log('  Format:', format);
+
+  // Return the service info
+  // This matches ArcGIS REST API response format exactly
+  res.json(layerInfo);
+});
+
+mapServerRouter.get('/StaticData', (req, res) => {
+  // ArcGIS supports ?f=json parameter
+  // We always return JSON since this is our format
+  const format = req.query.f || 'json';
+
+  // Log the request for debugging
+  console.log('[API #3 - Static Data] Request received');
+  console.log('  Format:', format);
+
+  // Return the service info
+  // This matches ArcGIS REST API response format exactly
+  res.json(outletFeatures);
 });
 
 export default mapServerRouter;
