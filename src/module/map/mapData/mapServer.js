@@ -5,8 +5,8 @@ const mapServerRouter = Router()
 // ============================================================
 // ArcGIS Online Configuration
 // ============================================================
-const ARCGIS_FEATURE_SERVER = 'url';
-const ARCGIS_TOKEN = 'token';
+const ARCGIS_FEATURE_SERVER = 'https://services3.arcgis.com/g9f7TnnmnQ9IOZWd/arcgis/rest/services/Gorilla_Visits/FeatureServer/0';
+const ARCGIS_TOKEN = 'AAPTabMmJOCz0Ne-xXOdm4kWxjQ..gFhv9F_SOldUjpiY743FpiX_LAHoUXXdYs_oMWEWcGtGoPMePKov8nLwZUuV-Dqlo0osVEIB0Am4fKRjzh9v6dfc2xbta8VZ7vPGc-kyIwUuCR6YxJGZcaDi37HUu29phA1PZ4ty9cTDb2-NhZ3lfz7xnwk6B80P1DAo086qTXR6IgF5RrX1bee1V2Ki4rHBYFgReSLqpUo90EjGpBjTuP8b7N7hZfaiQwIKDMntJq7NNKNmboWus5g.AT1_DdpIL6Dq';
 
 // ============================================================
 // API #1 - Service Info (MapServer root )
