@@ -5,15 +5,15 @@ const mapServerRouter = Router()
 // ============================================================
 // ArcGIS Online Configuration
 // ============================================================
-const ARCGIS_FEATURE_SERVER = 'https://services3.arcgis.com/g9f7TnnmnQ9IOZWd/arcgis/rest/services/Gorilla_Visits/FeatureServer/0';
-const ARCGIS_TOKEN = 'AAPTabMmJOCz0Ne-xXOdm4kWxjQ..gFhv9F_SOldUjpiY743FpiX_LAHoUXXdYs_oMWEWcGtGoPMePKov8nLwZUuV-Dqlo0osVEIB0Am4fKRjzh9v6dfc2xbta8VZ7vPGc-kyIwUuCR6YxJGZcaDi37HUu29phA1PZ4ty9cTDb2-NhZ3lfz7xnwk6B80P1DAo086qTXR6IgF5RrX1bee1V2Ki4rHBYFgReSLqpUo90EjGpBjTuP8b7N7hZfaiQwIKDMntJq7NNKNmboWus5g.AT1_DdpIL6Dq';
+
+
 
 // ============================================================
 // API #1 - Service Info (MapServer root )
 // ============================================================
 mapServerRouter.get('/', async (req, res) => {
   try {
-    const url = `${ARCGIS_FEATURE_SERVER}?f=json&token=${ARCGIS_TOKEN}`;
+    const url = `${process.env.GORILLA_SERVICE_FEATURE_SERVER}?f=json&token=${process.env.GORILLA_SERVICE_TOKEN}`;
     const response = await axios.get(url);
     res.json(response.data);
   } catch (error) {
@@ -26,7 +26,7 @@ mapServerRouter.get('/', async (req, res) => {
 // ============================================================
 mapServerRouter.get('/0', async (req, res) => {
   try {
-    const url = `${ARCGIS_FEATURE_SERVER}?f=json&token=${ARCGIS_TOKEN}`;
+    const url = `${process.env.GORILLA_SERVICE_FEATURE_SERVER}?f=json&token=${process.env.GORILLA_SERVICE_TOKEN}`;
     const response = await axios.get(url);
     res.json(response.data);
   } catch (error) {
@@ -35,7 +35,7 @@ mapServerRouter.get('/0', async (req, res) => {
 });
 
 // ============================================================
-// API #3 - Query Features (Static Data)
+// API #3 - Query Features
 // ============================================================
 mapServerRouter.get('/Data', async (req, res) => {
   try {
@@ -44,13 +44,13 @@ mapServerRouter.get('/Data', async (req, res) => {
     const returnGeometry = req.query.returnGeometry !== 'false';
     const resultRecordCount = req.query.resultRecordCount || 2000;
 
-    const url = `${ARCGIS_FEATURE_SERVER}/query` +
+    const url = `${process.env.GORILLA_SERVICE_FEATURE_SERVER}/query` +
       `?f=json` +
       `&where=${encodeURIComponent(where)}` +
       `&outFields=${outFields}` +
       `&returnGeometry=${returnGeometry}` +
       `&resultRecordCount=${resultRecordCount}` +
-      `&token=${ARCGIS_TOKEN}`;
+      `&token=${process.env.GORILLA_SERVICE_TOKEN}`;
 
     const response = await axios.get(url);
     const data = response.data;
@@ -83,8 +83,8 @@ mapServerRouter.get('/Data', async (req, res) => {
 // ============================================================
 mapServerRouter.get('/legend', async (req, res) => {
   try {
-    const legendUrl = ARCGIS_FEATURE_SERVER.replace('/FeatureServer/0', '/FeatureServer/legend');
-    const url = `${legendUrl}?f=json&token=${ARCGIS_TOKEN}`;
+    const legendUrl = process.env.GORILLA_SERVICE_FEATURE_SERVER.replace('/FeatureServer/0', '/FeatureServer/legend');
+    const url = `${legendUrl}?f=json&token=${process.env.GORILLA_SERVICE_TOKEN}`;
     const response = await axios.get(url);
     res.json(response.data);
   } catch (error) {

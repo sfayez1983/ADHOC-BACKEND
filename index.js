@@ -1,13 +1,19 @@
-import express from 'express'
-import cors from 'cors'
+import cors from 'cors';
+import dotenv from 'dotenv';
+import express from 'express';
 import appServer from './src/module/server.js';
-
+import connectDb from './src/db/connection.js'
 const app = express()
+const PORT = 3001
+
+//use config package to read .env file
+dotenv.config({ path: './config/.env', quiet: true })
+
+//db connection
+connectDb()
 
 // Parse JSON body
 app.use(express.json());
-
-const PORT = 3001
 
 // Enable CORS (required for ArcGIS JS API to call this server)
 app.use(cors({
@@ -21,7 +27,7 @@ app.listen(PORT, () => {
   console.log('╔══════════════════════════════════════════════════════════╗');
   console.log('║        ArcGIS Backend API Simulator - Running            ║');
   console.log('╠══════════════════════════════════════════════════════════╣');
-  console.log(`║  Port: ${PORT}                                           ║`);
+  console.log(`║  Port: ${PORT}                                              ║`);
   console.log('║                                                          ║');
   console.log('║  Endpoints:                                              ║');
   console.log('║  [API #1] Service Info:                                  ║');
