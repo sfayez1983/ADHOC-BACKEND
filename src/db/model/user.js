@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { USER_ROLES } from "../../common/constant/user.constant.js";
 
 
 const userSchema = mongoose.Schema({
@@ -20,8 +21,14 @@ const userSchema = mongoose.Schema({
     },
     clint:{
         type: String,
+        enum: Object.values(USER_CLIENTS),
         required: true,
     },
+    role:{
+        type: String,
+        enum: Object.values(USER_ROLES),
+        required: true,
+    }
     
 },{
     timestamps: true,
