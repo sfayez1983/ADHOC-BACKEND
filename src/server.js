@@ -1,4 +1,5 @@
-import mapServerRouter from './map/mapData/mapServer.js'
+import authRouter from './module/auth/auth.route.js';
+import mapServerRouter from './module/map/mapServer.js'
 /**
  * ============================================================
  * ArcGIS Backend - Main Server
@@ -35,6 +36,7 @@ app.use((req, res, next) => {
 // This creates the ArcGIS-compatible URL structure:
 // /api/arcgis/rest/services/OutletsMap/MapServer
 app.use('/api/arcgis/rest/services/OutletsMap/MapServer', mapServerRouter);
+app.use('/api/auth', authRouter)
 
 // ============================================================
 // Root endpoint

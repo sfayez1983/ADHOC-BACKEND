@@ -6,3 +6,5 @@ import { asyncHandler } from "../../middleware/asyncHandler.js";
 const authRouter = Router()
 
 authRouter.post('/signup', asyncHandler(authController.signup))
+
+export default authRouter
