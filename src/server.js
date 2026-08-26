@@ -1,5 +1,5 @@
 import authRouter from './module/auth/auth.route.js';
-import mapServerRouter from './module/map/mapServer.js'
+import mapServerRouter from './module/map/map.route.js'
 /**
  * ============================================================
  * ArcGIS Backend - Main Server

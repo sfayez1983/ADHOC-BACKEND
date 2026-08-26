@@ -2,15 +2,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import appServer from './src/server.js';
-import connectDb from './src/db/connection.js'
+// import connectDb from './src/db/connection.js'
 const app = express()
 const PORT = 3001
 
 //use config package to read .env file
 dotenv.config({ path: './config/.env', quiet: true })
 
-//db connection
-connectDb()
+// //db connection
+// connectDb()
 
 // Parse JSON body
 app.use(express.json());
