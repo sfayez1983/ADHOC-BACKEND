@@ -34,6 +34,54 @@ const getLayerConfig = async (layer) => {
 };
 
 // ==========================================
+const getSingleLayerInfo = async (layer) => {
+  const { url, token } = await getLayerConfig(layer);
+
+  if (!url) {
+    throw new Error(`URL is missing for layer "${layer}"`);
+  }
+
+  const response = await axios.get(url, {
+    params: {
+      f: "json",
+      token,
+    },
+  });
+
+  if (response.data.error) {
+    throw new Error(
+      response.data.error.message || "Failed to get layer info"
+    );
+  }
+
+  return response.data;
+};
+
+// ==========================================
+// LAYER INFO SERVICE
+// ==========================================
+
+export const layerInfoService = async (layer) => {
+  // layer=all
+  if (layer === "all") {
+    const [july, august] = await Promise.all([
+      getSingleLayerInfo("july"),
+      getSingleLayerInfo("august"),
+    ]);
+
+    return {
+      layers: {
+        july,
+        august,
+      },
+    };
+  }
+
+  // specific layer
+  return getSingleLayerInfo(layer);
+};
+
+// ==========================================
 // FETCH PAGE
 // ==========================================
 
@@ -47,16 +95,6 @@ const fetchPage = async ({
   resultRecordCount,
 }) => {
 
-  console.log({
-    url,
-    where,
-    outFields,
-    returnGeometry,
-    resultOffset,
-    resultRecordCount,
-  });
-
-
   const response = await axios.get(`${url}/query`, {
 
     params: {
@@ -68,7 +106,6 @@ const fetchPage = async ({
       resultRecordCount,
       token,
     },
-
   });
 
 
@@ -83,9 +120,8 @@ const fetchPage = async ({
   return data;
 };
 
-
 // ==========================================
-// GET ONE LAYER
+// GET ONE FEATURES LAYER
 // ==========================================
 
 const querySingleLayerService = async (
@@ -173,21 +209,10 @@ const querySingleLayerService = async (
     allFeatures.map((feature) => ({
 
       attributes: {
-
-        ...feature.attributes,
-
         // Add month
         month: layer,
 
-        lat:
-          feature.geometry?.y ??
-          feature.attributes?.lat ??
-          0,
-
-        lng:
-          feature.geometry?.x ??
-          feature.attributes?.lng ??
-          0,
+        ...feature.attributes,
 
       },
 
@@ -264,22 +289,21 @@ export const queryFeaturesService = async (
     // MERGE
     // ======================================
 
-    const features = [
+    const features = {
 
-      ...july.features,
+      july,
 
-      ...august.features,
-
-    ];
+      august,
+    };
 
 
     return {
 
-      layer: "all",
+      layer: "july + august",
 
-      count: features.length,
+      count: features.july.count + features.august.count,
 
-      features,
+      ...features,
 
     };
 

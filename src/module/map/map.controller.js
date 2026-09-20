@@ -6,24 +6,17 @@ import * as mapService from "./map.service.js";
 // ==========================================
 
 export const getLayerInfo = async (req, res, next) => {
-
   try {
-
     const layer = String(
       req.query.layer || "visits"
     ).toLowerCase();
 
-
     const data =
       await mapService.layerInfoService(layer);
 
-
     res.status(200).json(data);
-
   } catch (error) {
-
     next(error);
-
   }
 };
 
