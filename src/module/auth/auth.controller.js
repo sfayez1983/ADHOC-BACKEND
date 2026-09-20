@@ -1,6 +1,6 @@
 import { User } from "../../db/model/user.js";
 import { comparePassword } from "../../utils/bcrypt/compare.js";
-
+import { generateToken } from "../../utils/token/generateToken.js";
 
 export const signup = async (req, res, next) => {
     const { email, password } = req.body;
@@ -14,6 +14,8 @@ export const signup = async (req, res, next) => {
     res.status(201).json({ message: "User created successfully", user });
 }
 
+
+//login
 export const login = async (req, res, next) => {
     const { email, password } = req.body;
 

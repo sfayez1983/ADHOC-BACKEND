@@ -1,5 +1,7 @@
+import connectDb from './db/connection.js';
 import authRouter from './module/auth/auth.route.js';
 import mapServerRouter from './module/map/map.route.js'
+import { globalErrorHandling } from './utils/error/globalErrorHandling.js';
 /**
  * ============================================================
  * ArcGIS Backend - Main Server
@@ -26,6 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
+connectDb()
 // ============================================================
 // ArcGIS REST API Routes
 // ============================================================
@@ -56,6 +59,6 @@ app.get('/', (req, res) => {
 // ============================================================
 // Start Server
 // ============================================================
-
+app.use(globalErrorHandling)
 }
 export default appServer;

@@ -1,7 +1,5 @@
-import { messages } from "../common/messages/message.js"
 import { User } from "../db/model/user.js"
-import { errorResponse } from "../utils/res/res.error.js"
-import { verifyToken } from "../utils/token/index.js"
+import { verifyToken } from "../utils/token/verify.js"
 
 
 export const isAuthenticate = () => {
@@ -9,24 +7,18 @@ export const isAuthenticate = () => {
         const { token } = req.headers
         //check token start with Bearer
         if (!token || !token.startsWith("Bearer"))
-            errorResponse({ res, message: messages.token.invalid, statusCode: 401 })
-
+            throw new Error("invalid token, please login again", { cause: 401 })
         const payload = token.split(" ")[1]
 
         //verify token
         const result = verifyToken({ token: payload })
         if (result?.error)
-            return next(result.error)
+            return next(new Error(`${result.error}`, { cause: 401 }))
 
         //check user existence
-
-        const userExist = await User.findOne(
-            { _id: result._id, isActive: true }
-        ).populate('university', 'name')
-            .populate('faculty', 'name')
-            .populate('Specializations', 'name')
+        const userExist = await User.findById(result._id)
         if (!userExist)
-            return next(new Error(messages.token.unauthenticate, { cause: 401 }))
+            return next(new Error("user not found", { cause: 401 }))
 
         //prepare data
         req.user = userExist
