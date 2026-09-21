@@ -19,6 +19,19 @@ mapServerRouter.get(
   mapController.getFeatures
 );
 
+// Layer information
+mapServerRouter.get(
+  "/redbull/layer-info",
+  mapController.redbullgetLayerInfo
+);
+
+
+// Features
+mapServerRouter.get(
+  "/redbull/features",
+  mapController.getFeatures
+);
+
 
 
 export default mapServerRouter

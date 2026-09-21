@@ -30,10 +30,20 @@ const getLayerConfig = async (layer) => {
     };
   }
 
+  if (layer === "september") {
+    return {
+      url: process.env.REDBULL_SERVICE_FEATURE_SERVER,
+      token: process.env.REDBULL_SERVICE_TOKEN,
+    };
+  }
+
   throw new Error(`Invalid layer: ${layer}`);
 };
 
 // ==========================================
+// GET ONE LAYER INFO
+// ==========================================
+
 const getSingleLayerInfo = async (layer) => {
   const { url, token } = await getLayerConfig(layer);
 
@@ -121,10 +131,10 @@ const fetchPage = async ({
 };
 
 // ==========================================
-// GET ONE FEATURES LAYER
+// GET ONE FEATURE LAYER
 // ==========================================
 
-const querySingleLayerService = async (
+const querySingleFeatureLayerService = async (
   layer,
   query = {}
 ) => {
@@ -160,6 +170,16 @@ const querySingleLayerService = async (
 
   let hasMore = true;
 
+  if(outFields !== "*") {
+    const outFieldsArray = outFields.toLowerCase().split(",");
+    console.log("outFields: ", outFieldsArray);
+
+    const { fields } = await getSingleLayerInfo(layer);
+    let fieldsExsit = outFieldsArray.filter((field) => !fields.some((f) => f.name.toLowerCase() === field.toLowerCase()));
+    if (fieldsExsit.length > 0) {
+      throw new Error(`Invalid outFields: ${fieldsExsit.join(", ")}`);
+    }
+  }
 
   while (hasMore) {
 
@@ -257,7 +277,7 @@ export const queryFeaturesService = async (
 
     if (selectedLayer !== "all") {
 
-      return await querySingleLayerService(
+      return await querySingleFeatureLayerService(
         selectedLayer,
         query
       );
@@ -272,12 +292,12 @@ export const queryFeaturesService = async (
     const [july, august] =
       await Promise.all([
 
-        querySingleLayerService(
+        querySingleFeatureLayerService(
           "july",
           query
         ),
 
-        querySingleLayerService(
+        querySingleFeatureLayerService(
           "august",
           query
         ),
