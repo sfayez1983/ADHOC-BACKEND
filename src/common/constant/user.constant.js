@@ -5,7 +5,8 @@ export const USER_ROLES = {
     COSTUMER: 'costumer',
 }
 
-export const USER_CLIENTS = {
+export const USER_COMPANY = {
     GORILLA: 'gorilla',
+    REDBULL: 'redbull',
     // Add more clients as needed
 }

@@ -1,5 +1,6 @@
 import connectDb from './db/connection.js';
 import authRouter from './module/auth/auth.route.js';
+import checkDataRouter from './module/checkData/checkData.route.js';
 import mapServerRouter from './module/map/map.route.js'
 import { globalErrorHandling } from './utils/error/globalErrorHandling.js';
 /**
@@ -40,6 +41,7 @@ connectDb()
 // /api/arcgis/rest/services/OutletsMap/MapServer
 app.use('/api/arcgis/rest/services/OutletsMap/MapServer', mapServerRouter);
 app.use('/api/auth', authRouter)
+app.use('/api/checkData', checkDataRouter)
 
 // ============================================================
 // Root endpoint

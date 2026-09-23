@@ -8,14 +8,14 @@ const mapServerRouter = Router()
 
 // Layer information
 mapServerRouter.get(
-  "/layer-info",
+  "/gorilla/layer-info",
   mapController.getLayerInfo
 );
 
 
 // Features
 mapServerRouter.get(
-  "/features",
+  "/gorilla/features",
   mapController.getFeatures
 );
 
@@ -29,7 +29,7 @@ mapServerRouter.get(
 // Features
 mapServerRouter.get(
   "/redbull/features",
-  mapController.getFeatures
+  mapController.redbullgetFeatures
 );
 
 
