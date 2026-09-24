@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken'
 
 
-export const verifyToken = ({ token, pageType, key = process.env.JWT_KEY }) => {
+export const verifyToken = ({ token, pageType, key = process.env.saltOrRounds }) => {
     try {
-        const payload = jwt.verify(token, key);
+        const payload = jwt.verify(token, key); 
         if (pageType || payload?.type) {
             if (payload?.type !== pageType) {
                 return { error: 'Invalid token type' };

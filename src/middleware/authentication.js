@@ -4,11 +4,12 @@ import { verifyToken } from "../utils/token/verify.js"
 
 export const isAuthenticate = () => {
     return async (req, res, next) => {
-        const { token } = req.headers
-        //check token start with Bearer
-        if (!token || !token.startsWith("Bearer"))
-            throw new Error("invalid token, please login again", { cause: 401 })
-        const payload = token.split(" ")[1]
+        const { authorization } = req.headers
+
+        //check authorization start with Bearer
+        if (!authorization || !authorization.startsWith("Bearer"))
+            throw new Error("invalid authorization, please login again", { cause: 401 })
+        const payload = authorization.split(" ")[1]
 
         //verify token
         const result = verifyToken({ token: payload })
