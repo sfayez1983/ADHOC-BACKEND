@@ -1,5 +1,5 @@
 import { USER_COMPANY } from "../../common/constant/user.constant.js";
-import * as mapService from "./map.service.js";
+import * as mapService from "../service/map.service.js";
 
 
 // ==========================================

@@ -1,12 +1,26 @@
 import { Router } from "express";
-import { checkDataController } from "./checkData.controller.js";
+import * as checkDataController from "./checkData.controller.js";
 import { isAuthenticate } from "../../middleware/authentication.js";
+import { fileupload } from "../../utils/multer/fileupload.js";
+import { asyncHandler } from "../../middleware/asyncHandler.js";
 
 
 const checkDataRouter = Router()
 
 
 checkDataRouter.use(isAuthenticate())
-checkDataRouter.get("/", checkDataController)
 
+//check calculatoin data
+checkDataRouter.get("/", checkDataController.checkCalculationDataCon)
+
+//compare 
+checkDataRouter.put("/compare", 
+fileupload({ mainFolder: 'excels', partFolder: 'files' }).single('file'),
+    asyncHandler(checkDataController.compareDataCon)
+)
+
+checkDataRouter.get("/read", 
+    fileupload({ mainFolder: 'excels', partFolder: 'files' }).single('file'),
+    asyncHandler(checkDataController.readCon)
+)
 export default checkDataRouter
