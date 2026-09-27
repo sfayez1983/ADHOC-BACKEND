@@ -40,10 +40,11 @@ export const checkGlobalExpressionsService = async (features, layer) => {
     };
 };
 
-export const compareDataService = async (features, excelData) => {
+export const compareDataService = (features, excelData) => {
     // Portal data -> array of attributes
-    const portalData = features.map(feature => feature.attributes);
-
+    const layer = features?.layers[0];
+    const portalData = features[layer].features.map(feature => feature.attributes);
+    
     // Normalize customer_code
     const getCustomerCode = (data) =>
         String(data?.customer_code ?? "").trim();
@@ -143,6 +144,7 @@ export const compareDataService = async (features, excelData) => {
     // ==========================================
     // 3. Return result
     // ==========================================
+
 
     return {
         summary: {

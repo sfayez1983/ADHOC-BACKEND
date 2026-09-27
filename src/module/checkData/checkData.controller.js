@@ -1,7 +1,8 @@
 import { USER_COMPANY } from "../../common/constant/user.constant.js";
-import { readExcel } from "../service/excel.service.js";
+import  * as checkDataService  from "../service/checkData.service.js";
+import { readExcel, writeExcel } from "../service/excel.service.js";
 import { queryFeaturesService } from "../service/map.service.js";
-import * as checkDataService from "./checkData.service.js";
+
 
 //check calculation data
 export const checkCalculationDataCon = async (req, res, next) => {
@@ -15,7 +16,7 @@ export const checkCalculationDataCon = async (req, res, next) => {
     const data = await queryFeaturesService(layers, project, req.query);
 
     //check if data was wrong
-    const checkedData = await checkGlobalExpressionsService(data.september.features, req.query.layer);
+    const checkedData = await checkDataService.checkGlobalExpressionsService(data.september.features, req.query.layer);
     res.json(checkedData);
 }
 
@@ -29,14 +30,15 @@ export const compareDataCon = async (req, res) => {
 
     //get layer data
     const portalData = await queryFeaturesService(layers, project, req.query);
-
+    
     //check data not compared 
-    const excelData = readExcel(req.file.path)
+    const excelData = await readExcel(req.file.path)
 
     //check data not compared 
     const comparedData = checkDataService.compareDataService(portalData, excelData)
 
-    res.status(200).json(comparedData)
+    const excel = writeExcel(comparedData,req.query.layer,"compareData")
+    res.status(200).json({comparedData, excel})
 }
 
 //read 
