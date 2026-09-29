@@ -15,9 +15,9 @@ export const getLayerInfo = async (req, res, next) => {
     const layer = String(
       req.query.layer || "visits"
     ).toLowerCase();
-    
+
     const layers = layer === "all" ? MONTHS : [layer];
-    
+
     const project = USER_COMPANY.GORILLA
 
     const data =
@@ -43,7 +43,7 @@ export const redbullgetLayerInfo = async (req, res, next) => {
       req.query.layer || "september"
     ).toLowerCase();
 
-const layers = layer === "all" ? MONTHS : [layer];
+    const layers = layer === "all" ? MONTHS : [layer];
 
     const project = USER_COMPANY.REDBULL
 
@@ -82,6 +82,8 @@ export const getFeatures = async (req, res, next) => {
         req.query
       );
 
+
+
     res.status(200).json(data);
 
   } catch (error) {
@@ -110,8 +112,11 @@ export const redbullgetFeatures = async (req, res, next) => {
         project,
         req.query
       );
-
-    res.status(200).json(data);
+    const attachments = await mapService.getAttachmentsService(data.september.features.map((feature) => feature.attributes?.OBJECTID),
+      layers, project
+  )
+    console.log(attachments);
+    res.status(200).json({ data, attachments });
 
   } catch (error) {
 

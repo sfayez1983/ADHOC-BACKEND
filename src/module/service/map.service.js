@@ -235,3 +235,30 @@ export const queryFeaturesService = async (layers, project, query = {}) => {
     ...Object.fromEntries(results),
   };
 };
+
+// ==========================================
+//GET ATTACHMENTS
+// ==========================================
+
+export const getAttachmentsService = async (objectIds, layers, project) => {
+
+  const { url, token } = await getLayersConfig(layers[0], project);
+  console.log("url" + url + " token " + token);
+  
+  if (!objectIds?.length) {
+    return [];
+  }
+
+  const resposnse = await axios.get(`${url}/queryAttachments`,{
+    params: {
+        f: "json",
+        objectIds: objectIds.join(","),
+        returnUrl: true,
+        token,
+      },
+    }
+  );
+  console.log(resposnse);
+  
+  return resposnse
+};
