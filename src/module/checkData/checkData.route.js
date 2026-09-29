@@ -11,7 +11,8 @@ const checkDataRouter = Router()
 checkDataRouter.use(isAuthenticate())
 
 //check calculatoin data
-checkDataRouter.get("/", checkDataController.checkCalculationDataCon)
+checkDataRouter.get("/",
+    asyncHandler(checkDataController.checkCalculationDataCon))
 
 //compare 
 checkDataRouter.put("/compare", 

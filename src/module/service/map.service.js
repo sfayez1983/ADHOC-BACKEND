@@ -148,7 +148,6 @@ const querySingleFeatureLayerService = async (layer, project, query = {}) => {
 
   if (outFields !== "*") {
     const outFieldsArray = outFields.toLowerCase().split(",");
-    console.log("outFields: ", outFieldsArray);
 
     const { fields } = await getSingleLayerInfo(layer, project);
     let fieldsExsit = outFieldsArray.filter((field) => !fields.some((f) => f.name.toLowerCase() === field.toLowerCase()));
