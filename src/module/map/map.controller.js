@@ -112,11 +112,12 @@ export const redbullgetFeatures = async (req, res, next) => {
         project,
         req.query
       );
-    const attachments = await mapService.getAttachmentsService(data.september.features.map((feature) => feature.attributes?.OBJECTID),
-      layers, project
-  )
-    console.log(attachments);
-    res.status(200).json({ data, attachments });
+    //   const attachments = await mapService.getAttachmentsService(data.september.features.map((feature) => feature.attributes?.OBJECTID),
+    //     layers, project
+    // )
+
+    // res.status(200).json({ data, attachments });
+    res.status(200).json(data);
 
   } catch (error) {
 

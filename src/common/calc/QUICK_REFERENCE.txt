@@ -128,7 +128,7 @@ DOCUMENTATION
 📄 QUICK_REFERENCE.txt         - This file
 
 ================================================================================ outfields query ================================================================================
-customer_code,customer_name,status,project,VIP_Contract,rb_price_comm_main,rb_strikezone_main,additional_ambient_placement,outdoor_visibility_materials,sos_compliance,strike_zone_comp,price_comm,outdoor_vis_compliance,addin_sticky_shelf_cnt,sticky_shelf_place_compliance,ambient_place_compliance,rb_cooler_research_compliance,rb_cooler_cashier_compliance,cashier_place_compliance,rb_largecooler_compliance,rb_largecooler_present,rb_faces_pct,rb_complete_shelves_cnt,rb_availability_compliance,cashier_fridge_rb,cashier_cooler_placement,rb_cooler_present,Shop_Sign_Lightbox,ILLUMINATED_CAN_SIGN,Outdoor_Visibility_Compliance_SSL_LCS,rb_original_facings,rb_sf_facings,rb_white_facings,rb_purple_facings,rb_seablue_facings,rb_zero_facing,rb_other_facings,sting_facings,fury_facings,monster_facings,other_ed_facings,rb_ed_250ml_shelf_avail,rb_sf_250ml_shelf_avail,rb_white_250ml_shelf_avl,rb_purple_250ml_shelf_avl,rb_seablue_250ml_shelf_avl,rb_zero_250ml_shelf_avail,rb_availability_incentive,sos_incentive,strike_zone_incentive,price_comm_incentive,outdoor_vis_incentive,Outdoor_Visibility_incentive_SSL_LCS,sticky_shelf_incentive,ambient_incentive,rb_cooler_cashier_incentive,rb_cooler_research_incentive,cashier_place_incentive,rb_largecooler_incentive,total_facings,Comp_total_faces,rb_total_faces,Redbull_Availability,totalkpis,compliant,compliance,totalincentive
+customer_code,customer_name,Region,VIP_Contract,rb_ed_250ml_shelf_avail,rb_sf_250ml_shelf_avail,rb_zero_250ml_shelf_avail,rb_white_250ml_shelf_avl,rb_purple_250ml_shelf_avl,rb_seablue_250ml_shelf_avl,ED_Trgt,SF_Trgt,ZERO_Trgt,WHITE_Trgt,PURPLE_Trg,SEA_BLUE_Trgt,BLUE_Trgt,IN_OUT_Trgt,SKU_Avail_Sc,availability_score,rb_availability_compliance,rb_availability_incentive,total_facings,other_ed_facings,sting_facings,monster_facings,fury_facings,rb_original_facings,rb_sf_facings,rb_zero_facing,rb_white_facings,rb_purple_facings,rb_seablue_facings,rb_total_faces,rb_other_facings,Comp_total_faces,rb_faces_pct,rb_complete_shelves_cnt,rb_incomplete_shelves_cnt,Shelf_Facings_Check,sos_compliance,sos_comp_per,sos_incentive,rb_strikezone_main,strike_zone_comp,strike_zone_sc,strike_zone_incentive,rb_price_comm_main,price_comm,price_comm_comp_sc,price_comm_incentive,outdoor_visibility_materials,outdoor_vis_compliance,brand_vis_comp_Sc,outdoor_vis_incentive,rb_brand_visibility,Outdoor_Visibility_Compliance_SSL_LCS,Outdoor_Comp_Sc,Outdoor_Visibility_incentive_SSL_LCS,addin_sticky_shelf_cnt,sticky_shelf_place_compliance,Sticky_Shelf_comp_sc,sticky_shelf_incentive,additional_ambient_placement,ambient_place_compliance,Ambient_Place_Comp_Sc,ambient_incentive,cashier_fridge_rb,rb_cooler_cashier_compliance,RB_Cashier_Cooler_Sup_Comp_Sc,rb_cooler_cashier_incentive,rb_largecooler_present,rb_largecooler_compliance,RB_Lg_Cooler_IG_Comp_Sc,rb_largecooler_incentive,rb_cooler_present,rb_cooler_research_compliance,RB_Cooler_Research_Ba_Comp_Sc,rb_cooler_research_incentive,cashier_cooler_placement,cashier_place_compliance,Cashier_Place_GAS_Comp_Sc,cashier_place_incentive,TOTAL_SCORE,totalincentive,compliance
 ================================================================================
     const sos =                 Number(feature.sos_compliance ?? 0)
     const strike_comp =         Number(feature.strike_zone_comp ?? 0);
@@ -146,3 +146,22 @@ customer_code,customer_name,status,project,VIP_Contract,rb_price_comm_main,rb_st
     const shelves =             Number(feature.rb_complete_shelves_cnt ?? 0);
     const availability_comp =   Number(feature.rb_availability_compliance ?? 0);
     const cash_fg =             Number(feature.cashier_fridge_rb ?? 0)
+
+    Outdoor_Comp_Sc,Outdoor_Visibility_incentive_SSL_LCS,addin_sticky_shelf_cnt,sticky_shelf_place_compliance,
+    Sticky_Shelf_comp_sc,sticky_shelf_incentive,additional_ambient_placement,ambient_place_compliance,Ambient_Place_Comp_Sc,
+    ambient_incentive,cashier_fridge_rb,rb_cooler_cashier_compliance,RB_Cashier_Cooler_Sup_Comp_Sc,rb_cooler_cashier_incentive,
+    rb_largecooler_present,rb_largecooler_compliance,RB_Lg_Cooler_IG_Comp_Sc,rb_largecooler_incentive,rb_cooler_present,rb_cooler_research_compliance,
+    RB_Cooler_Research_Ba_Comp_Sc,rb_cooler_research_incentive,cashier_cooler_placement,cashier_place_compliance,Cashier_Place_GAS_Comp_Sc,cashier_place_incentive,
+    TOTAL_SCORE,totalincentive,compliance
+
+    Outdoor_Comp_Sc	Outdoor_Visibility_incentive_SSL_LCS	addin_sticky_shelf_cnt	sticky_shelf_place_compliance	Sticky_Shelf_comp_sc	sticky_shelf_incentive
+    	additional_ambient_placement	ambient_place_compliance	Ambient_Place_Comp_Sc	ambient_incentive	
+      cashier_fridge_rb	rb_cooler_cashier_compliance	RB_Cashier_Cooler_Sup_Comp_Sc	rb_cooler_cashier_incentive	
+      rb_largecooler_present	rb_largecooler_compliance	RB_Lg_Cooler_IG_Comp_Sc	rb_largecooler_incentive	rb_cooler_present	
+      rb_cooler_research_compliance	RB_Cooler_Research_Ba_Comp_Sc	rb_cooler_research_incentive	cashier_cooler_placement	
+      cashier_place_compliance	Cashier_Place_GAS_Comp_Sc	cashier_place_incentive	TOTAL_SCORE	totalincentive	compliance
+
+      ///////////////////////////////////////////////////
+      
+   ,cashier_cooler_placement,cashier_place_compliance,Cashier_Place_GAS_Comp_Sc,cashier_place_incentive,TOTAL_SCORE,totalincentive,compliance
+ 

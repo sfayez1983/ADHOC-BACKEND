@@ -1,6 +1,6 @@
 import { USER_COMPANY } from "../../common/constant/user.constant.js";
 import  * as checkDataService  from "../service/checkData.service.js";
-import { readExcel, writeExcel } from "../service/excel.service.js";
+import { formatComparisonExcel, readExcel, writeExcel } from "../service/excel.service.js";
 import { queryFeaturesService } from "../service/map.service.js";
 
 
@@ -37,7 +37,7 @@ export const compareDataCon = async (req, res) => {
     //check data not compared 
     const comparedData = checkDataService.compareDataService(portalData, excelData)
 
-    const excel = writeExcel(comparedData,req.query.layer,"compareData")
+    const excel = formatComparisonExcel(comparedData, req.query.layer, "compareData")
     res.status(200).json({comparedData, excel})
 }
 
@@ -45,8 +45,6 @@ export const compareDataCon = async (req, res) => {
 export const readCon = async(req, res) => {
     
     const readExcelData = await readExcel(req.file.path)
-    
-    console.log(readExcelData);
 
     res.status(200).json({
         success: true,

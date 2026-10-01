@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
+import { log } from "console";
 
 const PAGE_SIZE = 2000;
 
@@ -149,8 +150,11 @@ const querySingleFeatureLayerService = async (layer, project, query = {}) => {
   if (outFields !== "*") {
     const outFieldsArray = outFields.toLowerCase().split(",");
 
+    console.log(outFieldsArray);
     const { fields } = await getSingleLayerInfo(layer, project);
     let fieldsExsit = outFieldsArray.filter((field) => !fields.some((f) => f.name.toLowerCase() === field.toLowerCase()));
+    console.log(fieldsExsit);
+    (fieldsExsit);
     if (fieldsExsit.length > 0) {
       throw new Error(`Invalid outFields: ${fieldsExsit.join(", ")}`);
     }
@@ -240,24 +244,33 @@ export const queryFeaturesService = async (layers, project, query = {}) => {
 // ==========================================
 
 export const getAttachmentsService = async (objectIds, layers, project) => {
-
   const { url, token } = await getLayersConfig(layers[0], project);
-  console.log("url" + url + " token " + token);
-  
-  if (!objectIds?.length) {
-    return [];
+
+  if (!objectIds?.length) return [];
+
+  const BATCH_SIZE = 200;
+  const allAttachments = [];
+
+  for (let i = 0; i < objectIds.length; i += BATCH_SIZE) {
+    const batchIds = objectIds.slice(i, i + BATCH_SIZE);
+
+    const response = await axios.get(`${url}/queryAttachments`,
+      {
+        params: {
+          f: "json",
+          objectIds: batchIds.join(","),
+          returnUrl: true,
+          token,
+        },
+      }
+    );
+
+    const attachmentGroups = response.data.attachmentGroups || [];
+    allAttachments.push(...attachmentGroups);
   }
 
-  const resposnse = await axios.get(`${url}/queryAttachments`,{
-    params: {
-        f: "json",
-        objectIds: objectIds.join(","),
-        returnUrl: true,
-        token,
-      },
-    }
-  );
-  console.log(resposnse);
-  
-  return resposnse
+  return {
+    count: allAttachments.reduce((total, attachment) => total + attachment.attachmentInfos.length, 0),
+    allAttachments
+  };
 };
