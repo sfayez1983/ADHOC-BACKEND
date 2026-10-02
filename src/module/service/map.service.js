@@ -1,6 +1,5 @@
 import axios from "axios";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
-import { log } from "console";
 
 const PAGE_SIZE = 2000;
 
@@ -149,11 +148,13 @@ const querySingleFeatureLayerService = async (layer, project, query = {}) => {
 
   if (outFields !== "*") {
     const outFieldsArray = outFields.toLowerCase().split(",");
-
-    console.log(outFieldsArray);
     const { fields } = await getSingleLayerInfo(layer, project);
-    let fieldsExsit = outFieldsArray.filter((field) => !fields.some((f) => f.name.toLowerCase() === field.toLowerCase()));
-    console.log(fieldsExsit);
+
+    let fieldsExsit = outFieldsArray.filter((field) =>
+      !fields.some((f) =>
+        f.name.toLowerCase() === field.toLowerCase()
+      ));
+      
     (fieldsExsit);
     if (fieldsExsit.length > 0) {
       throw new Error(`Invalid outFields: ${fieldsExsit.join(", ")}`);

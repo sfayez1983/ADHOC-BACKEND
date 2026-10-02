@@ -8,7 +8,7 @@ import { asyncHandler } from "../../middleware/asyncHandler.js";
 const checkDataRouter = Router()
 
 
-checkDataRouter.use(isAuthenticate())
+// checkDataRouter.use(isAuthenticate())
 
 //check calculatoin data
 checkDataRouter.get("/",
