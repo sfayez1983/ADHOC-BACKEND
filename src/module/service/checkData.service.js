@@ -100,9 +100,16 @@ export const compareDataService = (features, excelData) => {
         Object.keys(excelRow).forEach(field => {
             if (field === "customer_code") return;
 
-            const excelValue = excelRow[field];
-            const portalValue = portalRow[field];
+            let excelValue = excelRow[field];
+            let portalValue = portalRow[field];
 
+            // if(field === "compliance"){ 
+            //     excelValue = Number(Number(excelValue).toFixed(3));
+            // }
+            if(field === "VIP_Contract") {
+                excelValue = String(excelValue).trim().toLowerCase();
+                portalValue = String(portalValue).trim().toLowerCase();
+            }
             if (!valuesAreEquivalent(excelValue, portalValue)) {
                 wrongFields[field] = { excel: excelValue, portal: portalValue };
             }

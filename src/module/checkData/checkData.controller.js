@@ -36,7 +36,9 @@ export const compareDataCon = async (req, res) => {
 
     //check data not compared 
     const comparedData = checkDataService.compareDataService(portalData, excelData)
-
+    if(comparedData.summary.missingInPortal === 0 && comparedData.summary.missingInExcel === 0 && comparedData.summary.differences === 0){
+        return res.status(200).json({message: "all data are correct"})
+    }
     const excel = formatComparisonExcel(comparedData, req.query.layer, "compareData")
     res.status(200).json({comparedData, excel})
 }

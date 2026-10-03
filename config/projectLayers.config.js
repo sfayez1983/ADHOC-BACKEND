@@ -58,6 +58,27 @@ export const getLayersConfig = async (layer, project) => {
             };
         }
 
+        if (layer === "april") {
+            return {
+                url: process.env.REDBULL_SERVICE_FEATURE_SERVER_APRIL,
+                token: process.env.REDBULL_SERVICE_TOKEN,
+            };
+        }
+
+        if (layer === "march") {
+            return {
+                url: process.env.REDBULL_SERVICE_FEATURE_SERVER_MARCH,
+                token: process.env.REDBULL_SERVICE_TOKEN,
+            };
+        }
+
+        if (layer === "february") {
+            return {
+                url: process.env.REDBULL_SERVICE_FEATURE_SERVER_FEBRUARY,
+                token: process.env.REDBULL_SERVICE_TOKEN,
+            };
+        }
+
     }
 
     throw new Error(`Invalid project/layer: ${project}/${layer}`);
