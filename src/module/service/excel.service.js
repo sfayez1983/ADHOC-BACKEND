@@ -131,8 +131,8 @@ export const formatComparisonExcel = (comparedData, layer, partFolder, mainFolde
         fields.forEach(field => {
             const values = item.wrongFields?.[field];
             row.push(
-                values?.excel ?? "",
-                values?.portal ?? ""
+                values?.excel ?? values?.expected,
+                values?.portal ?? values?.actual
             );
         });
 

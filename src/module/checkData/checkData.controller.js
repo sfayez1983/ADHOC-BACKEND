@@ -17,7 +17,11 @@ export const checkCalculationDataCon = async (req, res, next) => {
 
     //check if data was wrong
     const checkedData = await checkDataService.checkGlobalExpressionsService(data.september.features, req.query.layer);
-    res.json(checkedData);
+    // res.json(checkedData);
+    checkedData.differences = checkedData.wrongData
+    // res.json(checkedData.differences);
+    const excel = formatComparisonExcel(checkedData, req.query.layer, "compareData")
+    res.status(200).json({checkedData, excel})
 }
 
 // compare data

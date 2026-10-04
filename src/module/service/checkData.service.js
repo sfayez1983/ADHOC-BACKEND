@@ -1,4 +1,54 @@
-import globalExpressions from "../../common/calc/Global_Expressions.js";
+import globalExpressions from "../../common/calc/Global_Expressions_1.js";
+
+
+// ============================================================
+// normalize
+// Makes equal-meaning values compare as equal:
+//   null / undefined / ""  -> 0
+//   "yes" -> 1, "no" -> 0   (any case, spaces trimmed)
+//   numeric strings ("5", " 0.8 ") -> number
+//   other text -> trimmed lower-case text
+// ============================================================
+
+const normalize = (value) => {
+    if (value === null || value === undefined) return 0;
+
+    if (typeof value === "boolean") return value ? 1 : 0;
+
+    if (typeof value === "string") {
+        const v = value.trim().toLowerCase();
+
+        if (v === "") return 0;
+        if (v === "yes") return 1;
+        if (v === "no") return 0;
+
+        const n = Number(v);
+        return Number.isFinite(n) ? n : v;
+    }
+
+    return value;
+};
+
+// ============================================================
+// isSameValue
+// Numbers are compared with a tiny tolerance so float noise
+// (e.g. 0.30000000000000004 vs 0.3) is not reported as wrong.
+// ============================================================
+
+const isSameValue = (actual, expected) => {
+    const a = normalize(actual);
+    const e = normalize(expected);
+
+    if (typeof a === "number" && typeof e === "number") {
+        return Math.abs(a - e) < 1e-6;
+    }
+
+    return a === e;
+};
+
+// ============================================================
+// checkGlobalExpressionsService
+// ============================================================
 
 export const checkGlobalExpressionsService = async (features, layer) => {
     const wrongData = [];
@@ -11,7 +61,7 @@ export const checkGlobalExpressionsService = async (features, layer) => {
         const wrongFields = {};
 
         Object.keys(correctData).forEach((field) => {
-            if (outlet[field] !== correctData[field]) {
+            if (!isSameValue(outlet[field], correctData[field])) {
                 wrongFields[field] = {
                     actual: outlet[field],
                     expected: correctData[field],
@@ -29,12 +79,11 @@ export const checkGlobalExpressionsService = async (features, layer) => {
         }
     });
 
-
-    if (wrongData.length == 0)
-        return { message: `all data in layer ${layer} are correct` }
+    if (wrongData.length === 0)
+        return { message: `all data in layer ${layer} are correct` };
 
     return {
-        layer: "september",
+        layer,
         count: wrongData.length,
         wrongData,
     };
