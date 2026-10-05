@@ -61,7 +61,7 @@ const globalExpressions = (feature) => {
     const rb_seablue_250ml_shelf_avl = num("rb_seablue_250ml_shelf_avl");
     const rb_zero_250ml_shelf_avail = num("rb_zero_250ml_shelf_avail");
     const Redbull_Availability = num("Redbull_Availability");
-    const SKU_Avail_Sc = num("SKU_Avail_Sc");
+    const availability_score = num("availability_score");
     const rb_original_facings = num("rb_original_facings");
     const rb_sf_facings = num("rb_sf_facings");
     const rb_white_facings = num("rb_white_facings");
@@ -165,22 +165,22 @@ const globalExpressions = (feature) => {
     }
 
     // ============================================================
-    // SKU_Avail_Sc
+    // availability_score
     // ============================================================
 
-    out.SKU_Avail_Sc = 20 * Redbull_Availability;
+    out.availability_score = 20 * Redbull_Availability;
 
     // ============================================================
     // rb_availability_compliance
     // ============================================================
 
-    out.rb_availability_compliance = SKU_Avail_Sc === 20 ? 1 : 0;
+    out.rb_availability_compliance = availability_score === 20 ? 1 : 0;
 
     // ============================================================
     // rb_availability_incentive  [gas station only]
     // ============================================================
 
-    out.rb_availability_incentive = isGas && SKU_Avail_Sc === 20 ? 3 : 0;
+    out.rb_availability_incentive = isGas && availability_score === 20 ? 3 : 0;
 
     // ============================================================ SECTION 2 - FACINGS (all outlets) ============================================================
 
@@ -582,7 +582,7 @@ const globalExpressions = (feature) => {
     // TOTAL_SCORE
     // ============================================================
 
-    out.TOTAL_SCORE = SKU_Avail_Sc +
+    out.TOTAL_SCORE = availability_score +
         sos_compliance +
         strike_zone_sc +
         price_comm_comp_sc +

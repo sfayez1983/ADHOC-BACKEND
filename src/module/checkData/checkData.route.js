@@ -20,8 +20,14 @@ fileupload({ mainFolder: 'excels', partFolder: 'files' }).single('file'),
     asyncHandler(checkDataController.compareDataCon)
 )
 
+//read excel
 checkDataRouter.get("/read", 
     fileupload({ mainFolder: 'excels', partFolder: 'files' }).single('file'),
     asyncHandler(checkDataController.readCon)
+)
+
+//get attachment
+checkDataRouter.get("/attachment", 
+    asyncHandler(checkDataController.getAttachment)
 )
 export default checkDataRouter

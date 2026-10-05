@@ -6,7 +6,7 @@ import { asyncHandler } from '../../middleware/asyncHandler.js';
 
 const mapServerRouter = Router()
 
-mapServerRouter.use(isAuthenticate())
+// mapServerRouter.use(isAuthenticate())
 // Layer information
 mapServerRouter.get(
   "/gorilla/layer-info",

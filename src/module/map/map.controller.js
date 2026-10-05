@@ -3,7 +3,7 @@ import * as mapService from "../service/map.service.js";
 
 
 // ==========================================
-// LAYER INFO
+// GORILLA LAYER INFO
 // ==========================================
 
 export const getLayerInfo = async (req, res, next) => {
@@ -30,7 +30,7 @@ export const getLayerInfo = async (req, res, next) => {
 };
 
 // ==========================================
-// LAYER INFO
+// REDBULL LAYER INFO
 // ==========================================
 
 export const redbullgetLayerInfo = async (req, res, next) => {
@@ -58,7 +58,7 @@ export const redbullgetLayerInfo = async (req, res, next) => {
 
 
 // ==========================================
-// QUERY FEATURES
+// GORILLA QUERY FEATURES
 // ==========================================
 
 export const getFeatures = async (req, res, next) => {
@@ -93,6 +93,9 @@ export const getFeatures = async (req, res, next) => {
   }
 };
 
+// ==========================================
+// REDBULL QUERY FEATURES
+// ==========================================
 
 export const redbullgetFeatures = async (req, res, next) => {
 

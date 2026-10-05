@@ -1,3 +1,5 @@
+import axios from "axios";
+import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import globalExpressions from "../../common/calc/Global_Expressions_1.js";
 
 
@@ -9,7 +11,6 @@ import globalExpressions from "../../common/calc/Global_Expressions_1.js";
 //   numeric strings ("5", " 0.8 ") -> number
 //   other text -> trimmed lower-case text
 // ============================================================
-
 const normalize = (value) => {
     if (value === null || value === undefined) return 0;
 
@@ -34,7 +35,6 @@ const normalize = (value) => {
 // Numbers are compared with a tiny tolerance so float noise
 // (e.g. 0.30000000000000004 vs 0.3) is not reported as wrong.
 // ============================================================
-
 const isSameValue = (actual, expected) => {
     const a = normalize(actual);
     const e = normalize(expected);
@@ -47,9 +47,8 @@ const isSameValue = (actual, expected) => {
 };
 
 // ============================================================
-// checkGlobalExpressionsService
+// CHECK GLOBAL EXPRESSIONS SERVICE
 // ============================================================
-
 export const checkGlobalExpressionsService = async (features, layer) => {
     const wrongData = [];
 
@@ -89,6 +88,9 @@ export const checkGlobalExpressionsService = async (features, layer) => {
     };
 };
 
+// ==========================================
+// COMPARE DATA SERVICE
+// ==========================================
 export const compareDataService = (features, excelData) => {
     const layer = features?.layers?.[0];
     const portalData = (features?.[layer]?.features ?? []).map(f => f.attributes);
@@ -210,4 +212,53 @@ export const compareDataService = (features, excelData) => {
         missingInExcel,
         missingInPortal
     };
+};
+
+// ==========================================
+//GET ATTACHMENTS SERVICE
+// ==========================================
+export const getAttachmentsService = async (objectIds, outlet, layers, project) => {
+  if (!objectIds?.length) return [];
+
+  const { url, token } = await getLayersConfig(layers[0], project);
+
+  // OBJECTID -> outlet attributes, built once (O(1) lookups instead of .find per group)
+  const outletById = new Map(
+    (outlet || []).map((o) => [o.attributes?.OBJECTID, o.attributes])
+  );
+
+  const BATCH_SIZE = 200;
+  const allAttachments = [];
+
+  for (let i = 0; i < objectIds.length; i += BATCH_SIZE) {
+    const batchIds = objectIds.slice(i, i + BATCH_SIZE);
+
+    const response = await axios.get(`${url}/queryAttachments`, {
+      params: {
+        f: "json",
+        objectIds: batchIds.join(","),
+        returnUrl: true,
+        token,
+      },
+    });
+
+    const attachmentGroups = response.data.attachmentGroups || [];
+
+    // Enrich only this batch's groups
+    const enriched = attachmentGroups.map((group) => {
+      const attrs = outletById.get(group.parentObjectId);
+      return {
+        ...group,
+        customer_code: attrs?.customer_code ?? null,
+        VIP_Contract: attrs?.VIP_Contract ?? null,
+      };
+    });
+
+    allAttachments.push(...enriched);
+  }
+
+  return {
+    count: allAttachments.reduce((total, attachment) => total + attachment.attachmentInfos.length, 0),
+    allAttachments
+  };
 };
