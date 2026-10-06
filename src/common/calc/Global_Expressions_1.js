@@ -596,66 +596,6 @@ const globalExpressions = (feature) => {
         Cashier_Place_GAS_Comp_Sc;
 
     // ============================================================
-    // totalkpis
-    // ============================================================
-
-    out.totalkpis = 0;
-
-    if (isImpulse) {
-        out.totalkpis = 5;
-    } else if (isSupermarket) {
-        out.totalkpis = 6;
-    } else if (isBazar) {
-        out.totalkpis = 4;
-    } else if (isGas) {
-        out.totalkpis = 7;
-    }
-
-    // ============================================================
-    // compliant
-    // ============================================================
-
-    out.compliant = 0;
-
-    if (isImpulse) {
-        out.compliant =
-            rb_availability_compliance +
-            strike_zone_comp +
-            rb_largecooler_compliance +
-            sos_comp_per +
-            price_comm;
-    }
-
-    else if (isSupermarket) {
-        out.compliant =
-            rb_availability_compliance +
-            strike_zone_comp +
-            price_comm +
-            sos_comp_per +
-            ambient_place_compliance +
-            rb_cooler_cashier_compliance;
-    }
-
-    else if (isBazar) {
-        out.compliant =
-            rb_availability_compliance +
-            price_comm +
-            rb_cooler_research_compliance +
-            Outdoor_Visibility_Compliance_SSL_LCS;
-    }
-
-    else if (isGas) {
-        out.compliant =
-            rb_availability_compliance +
-            sos_comp_per +
-            strike_zone_comp +
-            price_comm +
-            outdoor_vis_compliance +
-            sticky_shelf_place_compliance +
-            cashier_place_compliance;
-    }
-
-    // ============================================================
     // compliance  [ratio 0-1 per outlet KPI count]
     // ============================================================
 

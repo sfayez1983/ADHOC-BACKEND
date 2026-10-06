@@ -95,18 +95,17 @@ export const readExcel = async (filePath) => {
 }
 
 // ===== FROMAT COMPARISON EXCEL =====
-export const formatComparisonExcel = (comparedData, layer, partFolder, mainFolder = 'uploads') => {
+export const formatComparisonExcel = (comparedData, layer, expectedRow, portalRow, partFolder, mainFolder = 'uploads') => {
 
     const uploadPath = path.resolve(`${mainFolder}/${partFolder}`);
     fs.mkdirSync(uploadPath, { recursive: true });
 
     const workbook = XLSX.utils.book_new();
-
     // =========================
     // Differences
     // =========================
     const differences = comparedData.differences || [];
-
+    
     // Every unique field that appears in any wrongFields
     const fields = [
         ...new Set(differences.flatMap(item => Object.keys(item.wrongFields || {})))
@@ -121,7 +120,7 @@ export const formatComparisonExcel = (comparedData, layer, partFolder, mainFolde
 
     fields.forEach(field => {
         firstRow.push(field, "");
-        secondRow.push("Excel", "Portal");
+        secondRow.push(expectedRow, portalRow);
     });
 
     // Data rows

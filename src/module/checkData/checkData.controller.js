@@ -21,7 +21,7 @@ export const checkCalculationDataCon = async (req, res, next) => {
     // res.json(checkedData);
     checkedData.differences = checkedData.wrongData
     // res.json(checkedData.differences);
-    const excel = formatComparisonExcel(checkedData, req.query.layer, "compareData")
+    const excel = formatComparisonExcel(checkedData, req.query.layer, "expected", "actual", "compareData")
     res.status(200).json({ checkedData, excel })
 }
 
@@ -46,7 +46,8 @@ export const compareDataCon = async (req, res) => {
     if (comparedData.summary.missingInPortal === 0 && comparedData.summary.missingInExcel === 0 && comparedData.summary.differences === 0) {
         return res.status(200).json({ message: "all data are correct" })
     }
-    const excel = formatComparisonExcel(comparedData, req.query.layer, "compareData")
+    
+    const excel = formatComparisonExcel(comparedData, req.query.layer,  "excel", "portal", "compareData")
     res.status(200).json({ comparedData, excel })
 }
 
