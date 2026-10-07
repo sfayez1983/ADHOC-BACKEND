@@ -1,4 +1,5 @@
 import axios from "axios";
+import { arcgisGet } from "../../utils/arcgis/arcgisGet.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import globalExpressions from "../../common/calc/Global_Expressions_1.js";
 
@@ -233,14 +234,21 @@ export const getAttachmentsService = async (objectIds, outlet, layers, project) 
   for (let i = 0; i < objectIds.length; i += BATCH_SIZE) {
     const batchIds = objectIds.slice(i, i + BATCH_SIZE);
 
-    const response = await axios.get(`${url}/queryAttachments`, {
-      params: {
-        f: "json",
-        objectIds: batchIds.join(","),
-        returnUrl: true,
-        token,
-      },
+    const response = await arcgisGet(`${url}/queryAttachments`, {
+      f: "json",
+      objectIds: batchIds.join(","),
+      returnUrl: true,
+      token,
     });
+
+    // ArcGIS returns HTTP 200 with an "error" object (e.g. expired token)
+    if (response.data.error) {
+      const err = new Error(
+        `ArcGIS queryAttachments failed: ${response.data.error.message || response.data.error.code}`
+      );
+      err.statusCode = 502;
+      throw err;
+    }
 
     const attachmentGroups = response.data.attachmentGroups || [];
 

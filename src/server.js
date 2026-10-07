@@ -3,6 +3,7 @@ import authRouter from './module/auth/auth.route.js';
 import checkDataRouter from './module/checkData/checkData.route.js';
 import mapServerRouter from './module/map/map.route.js'
 import { globalErrorHandling } from './utils/error/globalErrorHandling.js';
+import * as driveJobs from './module/service/driveJob.service.js';
 /**
  * ============================================================
  * ArcGIS Backend - Main Server
@@ -62,5 +63,17 @@ app.get('/', (req, res) => {
 // Start Server
 // ============================================================
 app.use(globalErrorHandling)
+
+// Continue any Google Drive upload that was stopped with the server.
+// Never let this stop the server from starting.
+try {
+  if (typeof driveJobs.resumeDriveUploadJobs === 'function') {
+    driveJobs.resumeDriveUploadJobs()
+  } else {
+    console.warn('[drive] resumeDriveUploadJobs not found: driveJob.service.js is an old version, uploads will not auto-continue')
+  }
+} catch (err) {
+  console.error('[drive] Could not resume uploads:', err.message)
+}
 }
 export default appServer;

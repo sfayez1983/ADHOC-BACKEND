@@ -1,4 +1,5 @@
 import axios from "axios";
+import { arcgisGet } from "../../utils/arcgis/arcgisGet.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 
 const PAGE_SIZE = 2000;
@@ -53,11 +54,9 @@ const getSingleLayerInfo = async (layer, project) => {
   }
 
   //get layer info from arcgis 
-  const response = await axios.get(url, {
-    params: {
-      f: "json",
-      token,
-    },
+  const response = await arcgisGet(url, {
+    f: "json",
+    token,
   });
 
   if (response.data.error) {
@@ -102,17 +101,14 @@ const fetchPage = async ({
   resultRecordCount,
 }) => {
 
-  const response = await axios.get(`${url}/query`, {
-
-    params: {
-      f: "json",
-      where,
-      outFields,
-      returnGeometry,
-      resultOffset,
-      resultRecordCount,
-      token,
-    },
+  const response = await arcgisGet(`${url}/query`, {
+    f: "json",
+    where,
+    outFields,
+    returnGeometry,
+    resultOffset,
+    resultRecordCount,
+    token,
   });
 
 

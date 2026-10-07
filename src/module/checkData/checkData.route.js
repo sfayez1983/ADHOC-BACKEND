@@ -30,4 +30,19 @@ checkDataRouter.get("/read",
 checkDataRouter.get("/attachment", 
     asyncHandler(checkDataController.getAttachment)
 )
+//upload attachments to google drive (runs in background)
+checkDataRouter.post("/attachment/drive",
+    asyncHandler(checkDataController.uploadAttachmentsToDriveCon)
+)
+
+//list upload jobs
+checkDataRouter.get("/attachment/drive",
+    asyncHandler(checkDataController.listDriveUploadJobsCon)
+)
+
+//upload job status
+checkDataRouter.get("/attachment/drive/:jobId",
+    asyncHandler(checkDataController.getDriveUploadJobCon)
+)
+
 export default checkDataRouter
