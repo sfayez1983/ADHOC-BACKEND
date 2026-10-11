@@ -25,7 +25,7 @@ export const checkCalculationDataCon = async (req, res, next) => {
     const data = await queryFeaturesService(layers, project, req.query);
 
     //check if data was wrong
-    const checkedData = await checkDataService.checkGlobalExpressionsService(data.september.features, req.query.layer);
+    const checkedData = await checkDataService.checkGlobalExpressionsService(data[layers].features, req.query.layer);
     // res.json(checkedData);
     checkedData.differences = checkedData.wrongData
     // res.json(checkedData.differences);

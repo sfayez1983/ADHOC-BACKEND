@@ -295,7 +295,7 @@ const globalExpressions = (feature) => {
 
             if (
                 rb_availability_compliance === 1 &&
-                TOTAL_SCORE > 80 &&
+                TOTAL_SCORE >= 80 &&
                 rb_faces_pct >= 0.7 &&
                 Shelf_Facings_Check === 2
             ) {
@@ -304,7 +304,7 @@ const globalExpressions = (feature) => {
 
             else if (
                 rb_availability_compliance === 1 &&
-                TOTAL_SCORE > 80 &&
+                TOTAL_SCORE >= 80 &&
                 rb_faces_pct >= 0.7 &&
                 Shelf_Facings_Check >= 3
             ) {
@@ -317,7 +317,7 @@ const globalExpressions = (feature) => {
 
             if (
                 rb_availability_compliance === 1 &&
-                TOTAL_SCORE > 80 &&
+                TOTAL_SCORE >= 80 &&
                 Shelf_Facings_Check === 1
             ) {
                 out.sos_incentive = 10;
@@ -325,7 +325,7 @@ const globalExpressions = (feature) => {
 
             else if (
                 rb_availability_compliance === 1 &&
-                TOTAL_SCORE > 80 &&
+                TOTAL_SCORE >= 80 &&
                 Shelf_Facings_Check === 2
             ) {
                 out.sos_incentive = 25;
@@ -333,7 +333,7 @@ const globalExpressions = (feature) => {
 
             else if (
                 rb_availability_compliance === 1 &&
-                TOTAL_SCORE > 80 &&
+                TOTAL_SCORE >= 80 &&
                 Shelf_Facings_Check >= 3
             ) {
                 out.sos_incentive = 32;
@@ -651,10 +651,10 @@ const globalExpressions = (feature) => {
     }
 
     // ============================================================
-    // totalincentive  [paid only when compliance >= 0.8]
+    // totalincentive  [paid only when TOTAL_SCORE >= 80]
     // ============================================================
 
-    out.totalincentive = compliance < 0.8
+    out.totalincentive = TOTAL_SCORE < 80
             ? 0
             : rb_availability_incentive +
               sos_incentive +
