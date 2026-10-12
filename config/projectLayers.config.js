@@ -23,6 +23,13 @@ export const getLayersConfig = async (layer, project) => {
     }
 
     if (project == "redbull") {
+        if (layer === "october") {
+            return {
+                url: process.env.REDBULL_SERVICE_FEATURE_SERVER_OCTOBER,
+                token: process.env.REDBULL_SERVICE_TOKEN,
+            };
+        }
+
         if (layer === "september") {
             return {
                 url: process.env.REDBULL_SERVICE_FEATURE_SERVER_SEPTEMPER,
