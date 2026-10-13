@@ -2,6 +2,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import appServer from './src/server.js';
+import { startNgrokTunnel } from './src/utils/ngrok/startTunnel.js';
 // import connectDb from './src/db/connection.js'
 const app = express()
 const PORT = 3001
@@ -39,6 +40,9 @@ app.listen(PORT, () => {
   console.log('║        OutletsMap/MapServer                              ║');
   console.log('╚══════════════════════════════════════════════════════════╝');
   console.log('');
+
+  // Public HTTPS address for ArcGIS Online webhooks (runs after .env is loaded)
+  startNgrokTunnel(PORT);
 });
 
 

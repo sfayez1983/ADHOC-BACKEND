@@ -19,6 +19,7 @@
   "license": "ISC",
   "description": "Backend server that simulates ArcGIS Online REST API for Outlets management",
   "dependencies": {
+    "@ngrok/ngrok": "^1.7.0",
     "axios": "^1.19.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

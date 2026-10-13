@@ -18,13 +18,26 @@ const isRetryable = (err) => {
   return NETWORK_CODES.has(err?.code) || status === 429 || (status >= 500 && status < 600);
 };
 
-export const arcgisGet = async (url, params = {}, { retries = 3, timeout = 60_000 } = {}) => {
+export const arcgisGet = (url, params = {}, options = {}) => arcgisRequest("get", url, params, options);
+
+// Same as arcgisGet, but sends the parameters as a form POST (long parameter lists)
+export const arcgisPost = (url, params = {}, options = {}) => arcgisRequest("post", url, params, options);
+
+const arcgisRequest = async (method, url, params = {}, { retries = 3, timeout = 60_000 } = {}) => {
   const host = (() => {
     try { return new URL(url).host; } catch { return url; }
   })();
 
   for (let attempt = 0; ; attempt++) {
     try {
+      if (method === "post") {
+        const form = new URLSearchParams();
+        for (const [k, v] of Object.entries(params)) {
+          if (v === undefined || v === null) continue;
+          form.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+        }
+        return await axios.post(url, form, { timeout });
+      }
       return await axios.get(url, { params, timeout });
     } catch (err) {
       if (isRetryable(err) && attempt < retries) {

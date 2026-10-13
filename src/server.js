@@ -2,6 +2,7 @@ import connectDb from './db/connection.js';
 import authRouter from './module/auth/auth.route.js';
 import checkDataRouter from './module/checkData/checkData.route.js';
 import mapServerRouter from './module/map/map.route.js'
+import webhookRouter from './module/webhook/webhook.route.js';
 import { globalErrorHandling } from './utils/error/globalErrorHandling.js';
 import * as driveJobs from './module/service/driveJob.service.js';
 /**
@@ -43,6 +44,8 @@ connectDb()
 app.use('/api/arcgis/rest/services/OutletsMap/MapServer', mapServerRouter);
 app.use('/api/auth', authRouter)
 app.use('/api/checkData', checkDataRouter)
+// ArcGIS Online webhooks (photos -> Google Drive)
+app.use('/api/webhooks', webhookRouter)
 
 // ============================================================
 // Root endpoint
