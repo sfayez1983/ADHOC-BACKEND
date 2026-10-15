@@ -81,10 +81,10 @@ export const readCon = async (req, res) => {
 // ==========================================
 export const getAttachment = async (req, res) => {
     const MONTHS = [
-        "september"
+        "october"
     ];
     const layer = String(
-        req.query.layer || "september"
+        req.query.layer || "october"
     ).toLowerCase();
     const layers = layer === "all" ? MONTHS : [layer];
 
@@ -96,8 +96,8 @@ export const getAttachment = async (req, res) => {
             req.query
         );
     const attachments = await checkDataService.getAttachmentsService(
-        data.september.features.map((feature) => feature.attributes?.OBJECTID),
-        data.september.features,
+        data.october.features.map((feature) => feature.attributes?.OBJECTID),
+        data.october.features,
         layers, project
     )
 
