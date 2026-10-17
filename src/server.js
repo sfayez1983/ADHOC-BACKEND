@@ -5,6 +5,7 @@ import mapServerRouter from './module/map/map.route.js'
 import webhookRouter from './module/webhook/webhook.route.js';
 import { globalErrorHandling } from './utils/error/globalErrorHandling.js';
 import * as driveJobs from './module/service/driveJob.service.js';
+import adminRouter from './module/admin/admin.route.js';
 /**
  * ============================================================
  * ArcGIS Backend - Main Server
@@ -44,6 +45,7 @@ connectDb()
 app.use('/api/arcgis/rest/services/OutletsMap/MapServer', mapServerRouter);
 app.use('/api/auth', authRouter)
 app.use('/api/checkData', checkDataRouter)
+app.use('/api/admin', adminRouter)
 // ArcGIS Online webhooks (photos -> Google Drive)
 app.use('/api/webhooks', webhookRouter)
 

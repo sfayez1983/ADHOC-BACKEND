@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: Object.values(USER_ROLES), required: true, },
 
     isActive: { type: Boolean, default: false },
+    
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
 }, {
     timestamps: true,

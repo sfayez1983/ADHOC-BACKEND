@@ -8,7 +8,7 @@ export const isAuthenticate = () => {
 
         //check authorization start with Bearer
         if (!authorization || !authorization.startsWith("Bearer"))
-            throw new Error("invalid authorization, please login again", { cause: 401 })
+            return next(new Error("invalid authentication, please login again", { cause: 401 }))
         const payload = authorization.split(" ")[1]
 
         //verify token

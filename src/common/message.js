@@ -13,7 +13,10 @@ export const messages = {
     subCategory: generateMessage('subCategory'),
     product: generateMessage('product'),
     brand: generateMessage('brand'),
-    unAuthorized: "you are not authorized",
+    token:{
+
+        unAuthorized: "you are not authorized",
+    },
     user: {
         ...generateMessage('user'),
         phone: "phone already exist",

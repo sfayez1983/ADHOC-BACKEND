@@ -266,7 +266,8 @@ export const getAttachmentsService = async (objectIds, outlet, layers, project) 
   }
 
   return {
-    count: allAttachments.reduce((total, attachment) => total + attachment.attachmentInfos.length, 0),
+    outletsCount: allAttachments.length,
+    imagesCount: allAttachments.reduce((total, attachment) => total + attachment.attachmentInfos.length, 0),
     allAttachments
   };
 };

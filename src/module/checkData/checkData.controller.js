@@ -5,11 +5,7 @@ import { queryFeaturesService } from "../service/map.service.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { getDriveClient, getDriveRootFolderId } from "../../../config/driveAPI.config.js";
 import { removeAlreadyUploaded } from "../service/driveUpload.service.js";
-import {
-    getDriveUploadJob,
-    listDriveUploadJobs,
-    startDriveUploadJob,
-} from "../service/driveJob.service.js";
+import { getDriveUploadJob, listDriveUploadJobs, startDriveUploadJob, } from "../service/driveJob.service.js";
 
 // ==========================================
 // CHECK CALCULATION DATA
@@ -96,12 +92,12 @@ export const getAttachment = async (req, res) => {
             req.query
         );
     const attachments = await checkDataService.getAttachmentsService(
-        data.october.features.map((feature) => feature.attributes?.OBJECTID),
-        data.october.features,
+        data[layer].features.map((feature) => feature.attributes?.OBJECTID),
+        data[layer].features,
         layers, project
     )
 
-    res.status(200).json({ data, attachments });
+    res.status(200).json({ attachments });
 }
 
 // ==========================================

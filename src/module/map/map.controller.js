@@ -101,10 +101,10 @@ export const redbullgetFeatures = async (req, res, next) => {
 
   try {
     const MONTHS = [
-      "september"
+      "october"
     ];
     const layer = String(
-      req.query.layer || "september"
+      req.query.layer || "october"
     ).toLowerCase();
     const layers = layer === "all" ? MONTHS : [layer];
 
@@ -115,11 +115,7 @@ export const redbullgetFeatures = async (req, res, next) => {
         project,
         req.query
       );
-    //   const attachments = await mapService.getAttachmentsService(data.september.features.map((feature) => feature.attributes?.OBJECTID),
-    //     layers, project
-    // )
 
-    // res.status(200).json({ data, attachments });
     res.status(200).json(data);
 
   } catch (error) {
