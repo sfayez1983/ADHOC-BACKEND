@@ -192,3 +192,72 @@ export const formatComparisonExcel = (comparedData, layer, expectedRow, portalRo
 
     return filePath;
 };
+
+// ===== ATTACHMENTS: PHOTOS PER KEYWORD EXCEL =====
+// keywordCounts: output of countAttachmentKeywordsService
+export const formatAttachmentKeywordsExcel = (keywordCounts, layer, partFolder = 'attachmentsCount', mainFolder = 'uploads') => {
+
+    const uploadPath = path.resolve(`${mainFolder}/${partFolder}`);
+    fs.mkdirSync(uploadPath, { recursive: true });
+
+    const { keywords = [], rows = [], totals = {} } = keywordCounts;
+    const workbook = XLSX.utils.book_new();
+
+    // =========================
+    // Photos per keyword (one row per outlet)
+    // =========================
+    const headers = ["Customer Code", "VIP Contract", "Field Code", ...keywords, "Total"];
+
+    const dataRows = rows.map(row => [
+        row.customer_code,
+        row.VIP_Contract,
+        row.field_code ?? "",
+        ...keywords.map(k => row.counts[k] || 0),
+        row.total,
+    ]);
+
+    // Totals row at the bottom
+    const totalRow = [
+        "Total",
+        "",
+        "",
+        ...keywords.map(k => totals[k] || 0),
+        rows.reduce((n, r) => n + r.total, 0),
+    ];
+
+    const sheet = XLSX.utils.aoa_to_sheet([headers, ...dataRows, totalRow]);
+
+    sheet["!cols"] = [
+        { wch: 15 }, // Customer Code
+        { wch: 20 }, // VIP Contract
+        { wch: 14 }, // Field Code
+        ...keywords.map(k => ({ wch: Math.max(10, k.length + 2) })),
+        { wch: 8 },  // Total
+    ];
+
+    // Filter buttons on the header, freeze header row + the two fixed columns
+    sheet["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: dataRows.length, c: headers.length - 1 } }) };
+    sheet["!freeze"] = { xSplit: 3, ySplit: 1 };
+
+    XLSX.utils.book_append_sheet(workbook, sheet, "Photos Per Keyword");
+
+    // =========================
+    // Keyword totals
+    // =========================
+    const totalsSheet = XLSX.utils.aoa_to_sheet([
+        ["Keyword", "Photos", "Outlets With This Keyword"],
+        ...keywords.map(k => [k, totals[k] || 0, rows.filter(r => r.counts[k]).length]),
+    ]);
+    totalsSheet["!cols"] = [{ wch: 35 }, { wch: 10 }, { wch: 26 }];
+    XLSX.utils.book_append_sheet(workbook, totalsSheet, "Keyword Totals");
+
+    // =========================
+    // Save file
+    // =========================
+    const fileName = `attachments-keywords-${layer}-${Date.now()}-${nanoid()}.xlsx`;
+    const filePath = path.join(uploadPath, fileName);
+
+    XLSX.writeFile(workbook, filePath);
+
+    return filePath;
+};

@@ -1,6 +1,6 @@
 import { USER_COMPANY } from "../../common/constant/user.constant.js";
 import * as checkDataService from "../service/checkData.service.js";
-import { formatComparisonExcel, readExcel, writeExcel } from "../service/excel.service.js";
+import { formatAttachmentKeywordsExcel, formatComparisonExcel, readExcel, writeExcel } from "../service/excel.service.js";
 import { queryFeaturesService } from "../service/map.service.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { getDriveClient, getDriveRootFolderId } from "../../../config/driveAPI.config.js";
@@ -98,6 +98,55 @@ export const getAttachment = async (req, res) => {
     )
 
     res.status(200).json({ attachments });
+}
+
+// ==========================================
+// ATTACHMENT EXCEL (photos per keyword per outlet)
+// ==========================================
+// GET /api/checkData/attachment/excel?layer=october
+export const getAttachmentExcel = async (req, res) => {
+    const MONTHS = [
+        "october"
+    ];
+    const layer = String(
+        req.query.layer || "october"
+    ).toLowerCase();
+    const layers = layer === "all" ? MONTHS : [layer];
+
+    const project = USER_COMPANY.REDBULL
+    const data =
+        await queryFeaturesService(
+            layers,
+            project,
+            req.query
+        );
+
+    const results = [];
+    for (const l of layers) {
+        const features = data[l]?.features || [];
+
+        const attachments = await checkDataService.getAttachmentsService(
+            features.map((feature) => feature.attributes?.OBJECTID),
+            features,
+            [l], project
+        )
+
+        // count photos per keyword for every outlet, then write the Excel
+        const keywordCounts = checkDataService.countAttachmentKeywordsService(
+            attachments?.allAttachments || [],
+            features
+        )
+        const excel = formatAttachmentKeywordsExcel(keywordCounts, l)
+
+        results.push({
+            layer: l,
+            summary: keywordCounts.summary,
+            keywordTotals: keywordCounts.totals,
+            excel,
+        });
+    }
+
+    res.status(200).json(results.length === 1 ? results[0] : { results });
 }
 
 // ==========================================

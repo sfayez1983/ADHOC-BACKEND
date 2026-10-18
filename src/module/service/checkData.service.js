@@ -271,3 +271,67 @@ export const getAttachmentsService = async (objectIds, outlet, layers, project) 
     allAttachments
   };
 };
+
+// ==========================================
+// COUNT PHOTOS PER KEYWORD FOR EVERY OUTLET
+// ==========================================
+// allAttachments: output of getAttachmentsService
+// outlets (optional): features of the layer, so outlets with 0 photos are listed too
+export const NO_KEYWORD = "(no keyword)";
+
+// Read an attribute whatever its case (field_code / Field_Code / FIELD_CODE)
+const getAttr = (attrs = {}, name) => {
+  const key = Object.keys(attrs).find((k) => k.toLowerCase() === name.toLowerCase());
+  return key !== undefined ? attrs[key] : undefined;
+};
+
+export const countAttachmentKeywordsService = (allAttachments = [], outlets = []) => {
+  const keywordTotals = new Map();
+  const rowsById = new Map();
+
+  // every outlet first (0 photos), in the layer's order
+  for (const o of outlets) {
+    const a = o.attributes || {};
+    if (a.OBJECTID === undefined) continue;
+    rowsById.set(a.OBJECTID, {
+      customer_code: a.customer_code ?? "",
+      VIP_Contract: a.VIP_Contract ?? "",
+      field_code: getAttr(a, "field_code") ?? "",
+      counts: {},
+      total: 0,
+    });
+  }
+
+  for (const group of allAttachments) {
+    let row = rowsById.get(group.parentObjectId);
+    if (!row) {
+      row = { customer_code: group.customer_code ?? "", VIP_Contract: group.VIP_Contract ?? "", field_code: group.field_code ?? "", counts: {}, total: 0 };
+      rowsById.set(group.parentObjectId, row);
+    }
+    for (const att of group.attachmentInfos || []) {
+      const keyword = String(att.keywords ?? "").trim() || NO_KEYWORD;
+      row.counts[keyword] = (row.counts[keyword] || 0) + 1;
+      row.total++;
+      keywordTotals.set(keyword, (keywordTotals.get(keyword) || 0) + 1);
+    }
+  }
+
+  // columns: most used keyword first, "(no keyword)" last
+  const keywords = [...keywordTotals.entries()]
+    .sort((a, b) => (a[0] === NO_KEYWORD) - (b[0] === NO_KEYWORD) || b[1] - a[1])
+    .map(([k]) => k);
+
+  const rows = [...rowsById.values()];
+  return {
+    keywords,
+    rows,
+    totals: Object.fromEntries(keywords.map((k) => [k, keywordTotals.get(k)])),
+    summary: {
+      outlets: rows.length,
+      outletsWithPhotos: rows.filter((r) => r.total > 0).length,
+      outletsWithoutPhotos: rows.filter((r) => r.total === 0).length,
+      photos: rows.reduce((n, r) => n + r.total, 0),
+      keywords: keywords.length,
+    },
+  };
+};

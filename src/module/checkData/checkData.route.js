@@ -30,6 +30,11 @@ checkDataRouter.get("/read",
 checkDataRouter.get("/attachment", 
     asyncHandler(checkDataController.getAttachment)
 )
+
+//get attachment as excel (photos per keyword per outlet)
+checkDataRouter.get("/attachment/excel",
+    asyncHandler(checkDataController.getAttachmentExcel)
+)
 //upload attachments to google drive (runs in background)
 checkDataRouter.post("/attachment/drive",
     asyncHandler(checkDataController.uploadAttachmentsToDriveCon)
