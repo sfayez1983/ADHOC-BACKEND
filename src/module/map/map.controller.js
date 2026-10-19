@@ -3,14 +3,20 @@ import * as mapService from "../service/map.service.js";
 
 
 // ==========================================
-// GORILLA LAYER INFO
+// client LAYER INFO
 // ==========================================
 
-export const getLayerInfo = async (req, res, next) => {
+export const clientGetLayerInfo = async (req, res, next) => {
   try {
     const MONTHS = [
+      "march",
+      "april",
+      "may",
+      "june",
       "july",
       "august",
+      "september",
+      "october"
     ];
     const layer = String(
       req.query.layer || "visits"
@@ -18,34 +24,7 @@ export const getLayerInfo = async (req, res, next) => {
 
     const layers = layer === "all" ? MONTHS : [layer];
 
-    const project = USER_COMPANY.GORILLA
-
-    const data =
-      await mapService.layerInfoService(layers, project);
-
-    res.status(200).json(data);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// ==========================================
-// REDBULL LAYER INFO
-// ==========================================
-
-export const redbullgetLayerInfo = async (req, res, next) => {
-  try {
-    const MONTHS = [
-      "september"
-    ];
-
-    const layer = String(
-      req.query.layer || "september"
-    ).toLowerCase();
-
-    const layers = layer === "all" ? MONTHS : [layer];
-
-    const project = USER_COMPANY.REDBULL
+    const project = req.user.client
 
     const data =
       await mapService.layerInfoService(layers, project);
@@ -57,24 +36,31 @@ export const redbullgetLayerInfo = async (req, res, next) => {
 };
 
 
+
 // ==========================================
-// GORILLA QUERY FEATURES
+// client QUERY FEATURES
 // ==========================================
 
-export const getFeatures = async (req, res, next) => {
+export const clientGetFeatures = async (req, res, next) => {
   try {
     const MONTHS = [
+      "march",
+      "april",
+      "may",
+      "june",
       "july",
       "august",
+      "september",
+      "october"
     ];
 
     const layer = String(
-      req.query.layer || "visits"
+      req.query.layer || "all"
     ).toLowerCase();
 
     const layers = layer === "all" ? MONTHS : [layer];
 
-    const project = USER_COMPANY.GORILLA
+    const project = req.user.client
     const data =
       await mapService.queryFeaturesService(
         layers,
@@ -94,21 +80,64 @@ export const getFeatures = async (req, res, next) => {
 };
 
 // ==========================================
-// REDBULL QUERY FEATURES
+// DEVELOPER LAYER INFO
 // ==========================================
 
-export const redbullgetFeatures = async (req, res, next) => {
+export const developerGetLayerInfo = async (req, res, next) => {
+  try {
+    const MONTHS = [
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october"
+    ];
+
+    const layer = String(
+      req.query.layer || "september"
+    ).toLowerCase();
+
+    const layers = layer === "all" ? MONTHS : [layer];
+    
+    const { project } = req.params
+
+    const data =
+      await mapService.layerInfoService(layers, project);
+
+    res.status(200).json(data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ==========================================
+// DEVELOPER QUERY FEATURES
+// ==========================================
+
+export const developerGetFeatures = async (req, res, next) => {
 
   try {
     const MONTHS = [
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
       "october"
     ];
+
     const layer = String(
       req.query.layer || "october"
     ).toLowerCase();
     const layers = layer === "all" ? MONTHS : [layer];
 
-    const project = USER_COMPANY.REDBULL
+    const { project } = req.params
     const data =
       await mapService.queryFeaturesService(
         layers,

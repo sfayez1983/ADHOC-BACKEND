@@ -3,32 +3,39 @@ import Router from 'express';
 import * as mapController from "./map.controller.js";
 import { isAuthenticate } from '../../middleware/authentication.js';
 import { asyncHandler } from '../../middleware/asyncHandler.js';
+import { isAuthorized } from '../../middleware/authorizetion.js';
+import { USER_ROLES } from '../../common/constant/user.constant.js';
 
 const mapServerRouter = Router()
 
-// mapServerRouter.use(isAuthenticate())
+//all routes are protected by authentication middleware
+mapServerRouter.use(isAuthenticate())
+
 // Layer information
 mapServerRouter.get(
-  "/gorilla/layer-info",
-  asyncHandler(mapController.getLayerInfo)
+  "/layer-info",
+  asyncHandler(mapController.clientGetLayerInfo)
 );
 
 // Features
 mapServerRouter.get(
-  "/gorilla/features",
-  asyncHandler(mapController.getFeatures)
+  "/features",
+  asyncHandler(mapController.clientGetFeatures)
 )
 
+//only admin and developer can access those two routes
+mapServerRouter.use(isAuthorized([USER_ROLES.ADMIN, USER_ROLES.DEVELOPER]))
+
 // Layer information
 mapServerRouter.get(
-  "/redbull/layer-info",
- asyncHandler(mapController.redbullgetLayerInfo)
+  "/:project/layer-info",
+  asyncHandler(mapController.developerGetLayerInfo)
 );
 
 // Features
 mapServerRouter.get(
-  "/redbull/features",
- asyncHandler(mapController.redbullgetFeatures)
+  "/:project/features",
+  asyncHandler(mapController.developerGetFeatures)
 );
 
 export default mapServerRouter
