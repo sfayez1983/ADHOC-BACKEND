@@ -1,0 +1,44 @@
+{
+  "name": "arcgis-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "drive:token": "node scripts/get-drive-token.js",
+    "drive:test": "node scripts/test-drive.js"
+  },
+  "keywords": [
+    "arcgis",
+    "rest-api",
+    "map",
+    "outlets"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Backend server that simulates ArcGIS Online REST API for Outlets management",
+  "dependencies": {
+    "@ngrok/ngrok": "^1.7.0",
+    "axios": "^1.19.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "googleapis": "^183.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.3",
+    "multer": "^2.4.0",
+    "nanoid": "^6.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "data/*",
+      "uploads/*"
+    ]
+  }
+}
