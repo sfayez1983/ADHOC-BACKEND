@@ -88,5 +88,15 @@ export const getLayersConfig = async (layer, project) => {
 
     }
 
+
+    if (project == "ksa") {
+        if (layer === "census") {
+            return {
+                url: process.env.KSA_SERVICE_FEATURE_SERVER,
+                token: process.env.KSA_SERVICE_TOKEN,
+            };
+        }
+    }
+
     throw new Error(`Invalid project/layer: ${project}/${layer}`);
 }
