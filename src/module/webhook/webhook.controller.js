@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { USER_COMPANY } from "../../common/constant/user.constant.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import {
     getRecentWebhookEvents,
@@ -29,13 +28,8 @@ const checkKey = (req) => {
 };
 
 const checkProjectLayer = async (req) => {
-    const project = String(req.params.project || "").toLowerCase();
-    const layer = String(req.params.layer || "").toLowerCase();
-    if (!Object.values(USER_COMPANY).includes(project)) {
-        const err = new Error(`Unknown project "${project}"`);
-        err.statusCode = 400;
-        throw err;
-    }
+    const project = String(req.params.project || "")
+    const layer = String(req.params.layer || "")
     try {
         await getLayersConfig(layer, project);
     } catch {

@@ -258,6 +258,12 @@ export const getAttachmentsService = async (objectIds, outlet, layers, project) 
       return {
         ...group,
         customer_code: attrs?.customer_code ?? null,
+        // used for the Drive folder name when customer_code is missing
+        // (undefined = field was not requested, so the Drive upload reads it from ArcGIS itself)
+        new_adhoc_code: attrs?.new_adhoc_code,
+        Area_Name: attrs?.Area_Name,
+        Block: attrs?.Block,
+        ID: attrs?.ID,
         VIP_Contract: attrs?.VIP_Contract ?? null,
       };
     });

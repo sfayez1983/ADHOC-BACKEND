@@ -5,6 +5,7 @@ import { queryFeaturesService } from "../service/map.service.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { getDriveClient, getDriveRootFolderId } from "../../../config/driveAPI.config.js";
 import { removeAlreadyUploaded } from "../service/driveUpload.service.js";
+import { backfillFolderLinks } from "../service/webhook.service.js";
 import { getDriveUploadJob, listDriveUploadJobs, startDriveUploadJob, } from "../service/driveJob.service.js";
 
 // ==========================================
@@ -83,8 +84,7 @@ export const getAttachment = async (req, res) => {
         req.query.layer || "october"
     ).toLowerCase();
     const layers = layer === "all" ? MONTHS : [layer];
-
-    const project = USER_COMPANY.REDBULL
+    const project = req.query.project
     const data =
         await queryFeaturesService(
             layers,
@@ -157,9 +157,9 @@ export const getAttachmentExcel = async (req, res) => {
 // Starts (or continues from saved progress) a background upload and returns a jobId right away.
 export const uploadAttachmentsToDriveCon = async (req, res) => {
     const MONTHS = ["september"];
-    const layer = String(req.query.layer || req.body?.layer || "september").toLowerCase();
+    const layer = String(req.query.layer || req.body?.layer).toLowerCase();
     const layers = layer === "all" ? MONTHS : [layer];
-    const project = USER_COMPANY.REDBULL
+    const project = req.query.project
 
     const { rootFolderId, layerName } = req.body || {};
     // ?restart=true -> ignore saved progress and check every photo again
@@ -189,7 +189,7 @@ export const uploadAttachmentsToDriveCon = async (req, res) => {
         )
         let attachmentGroups = attachments?.allAttachments || [];
 
-        if (!attachments?.count) {
+        if (!attachments?.imagesCount) {
             results.push({ layer: l, outlets: outlets.length, photos: 0, message: "No photos to upload" });
             continue;
         }
@@ -248,6 +248,22 @@ export const uploadAttachmentsToDriveCon = async (req, res) => {
         results,
     });
 }
+
+// POST /api/checkData/attachment/drive/links?project=redbull&layer=september[&dryRun=false]
+// Fills LinkGoogleDrive for outlets whose Drive folder already exists.
+// dryRun defaults to TRUE: it only reports what would change until you pass dryRun=false.
+export const backfillDriveLinksCon = async (req, res) => {
+    const project = req.query.project;
+    const layer = String(req.query.layer || "");
+    if (!project || !layer) {
+        return res.status(400).json({ success: false, message: "project and layer are required" });
+    }
+    const dryRun = String(req.query.dryRun ?? "true").toLowerCase() !== "false";
+    const { rootFolderId, layerName } = req.body || {};
+
+    const result = await backfillFolderLinks({ project, layer, rootFolderId, layerName, dryRun });
+    res.status(200).json({ success: true, ...result });
+};
 
 // GET /api/checkData/attachment/drive/:jobId
 export const getDriveUploadJobCon = async (req, res) => {

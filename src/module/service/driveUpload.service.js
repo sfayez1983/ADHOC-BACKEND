@@ -1,5 +1,8 @@
 import axios from "axios";
+import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { arcgisPost } from "../../utils/arcgis/arcgisGet.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import {
   getDriveClient,
@@ -103,9 +106,136 @@ const escapeQ = (s) => String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 // Drive allows most characters, but slashes make names confusing
 const sanitizeName = (s) => String(s ?? "").replace(/[\/\\]/g, "-").trim();
 
-// Folder name for an outlet: customer_code (or OBJECTID_<id> if missing)
+const clean = (v) => String(v ?? "").trim();
+
+// Folder name for an outlet (set by assignOutletFolderNames before any upload):
+//   1) customer_code
+//   2) new_adhoc_code            (used by several outlets -> <new_adhoc_code>_<nanoid>)
+//   3) <Area_Name>_<Block>_<ID>_<nanoid>
 const outletFolderName = (group) =>
-  sanitizeName(group.customer_code ?? `OBJECTID_${group.parentObjectId}`);
+  sanitizeName(group.folderName || clean(group.customer_code) || `OBJECTID_${group.parentObjectId}`);
+
+// Names that contain a random nanoid are saved here, so the same outlet gets the
+// same folder on the next run, a resume or a webhook call (no second folder / re-upload).
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const NAMES_DIR = path.resolve(__dirname, "../../../data/drive-folders");
+const namesFile = (project, layer) =>
+  path.join(NAMES_DIR, `${project}_${layer}`.replace(/[^a-z0-9_-]/gi, "-") + ".json");
+
+const loadNames = (file) => {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8")) || {};
+  } catch {
+    return {};
+  }
+};
+
+const saveNames = (file, names) => {
+  fs.mkdirSync(NAMES_DIR, { recursive: true });
+  fs.writeFileSync(`${file}.tmp`, JSON.stringify(names, null, 2));
+  fs.renameSync(`${file}.tmp`, file);
+};
+
+// new_adhoc_code / Area_Name / Block / ID of the outlets, from ArcGIS (the attachment groups only carry customer_code).
+// Only fields that exist on the layer are requested (a missing field makes ArcGIS reject the whole query).
+const NAME_FIELDS = ["new_adhoc_code", "Area_Name", "Block", "ID"];
+
+const fetchNameFields = async (url, token, objectIds) => {
+  const byId = new Map();
+
+  const { data: info } = await arcgisPost(url, { f: "json", token });
+  if (info.error) throw new DriveUploadError(`Reading layer fields failed: ${info.error.message || info.error.code}`, 502);
+
+  const idField = info.objectIdField || "OBJECTID";
+  const layerFields = new Map((info.fields || []).map((f) => [f.name.toLowerCase(), f.name]));
+  const wanted = NAME_FIELDS.map((n) => layerFields.get(n.toLowerCase())).filter(Boolean);
+  const missing = NAME_FIELDS.filter((n) => !layerFields.has(n.toLowerCase()));
+  if (missing.length) console.warn(`[drive] Layer has no field: ${missing.join(", ")} (treated as empty for folder names)`);
+  if (!wanted.length) return byId;
+
+  const BATCH = 200;
+  for (let i = 0; i < objectIds.length; i += BATCH) {
+    const ids = objectIds.slice(i, i + BATCH);
+    const { data } = await arcgisPost(`${url}/query`, {
+      f: "json",
+      where: `${idField} IN (${ids.join(",")})`,
+      outFields: [idField, ...wanted].join(","),
+      returnGeometry: false,
+      token,
+    });
+    if (data.error) throw new DriveUploadError(`Reading outlet names failed: ${data.error.message || data.error.code}`, 502);
+
+    for (const f of data.features || []) {
+      // normalise to our field names, whatever the layer's letter case is
+      const attrs = {};
+      for (const n of NAME_FIELDS) attrs[n] = f.attributes[layerFields.get(n.toLowerCase())];
+      byId.set(f.attributes[idField], attrs);
+    }
+  }
+  return byId;
+};
+
+/**
+ * Sets group.folderName on every group (groups that already have one are left alone).
+ *   customer_code -> new_adhoc_code (+ _nanoid if duplicated) -> Area_Name_Block_ID_nanoid
+ */
+export const assignOutletFolderNames = async ({ groups = [], layer, project, url, token, save = true }) => {
+  const file = namesFile(project, layer);
+  const saved = loadNames(file);
+  let changed = false;
+
+  const pending = [];
+  for (const g of groups) {
+    if (g.folderName) continue;
+    const customerCode = clean(g.customer_code);
+    if (customerCode) {
+      g.folderName = customerCode;
+    } else if (saved[g.parentObjectId]) {
+      g.folderName = saved[g.parentObjectId];
+    } else {
+      pending.push(g);
+    }
+  }
+  if (!pending.length) return groups;
+
+  // only ask ArcGIS when the groups do not already carry the fields (see getAttachmentsService)
+  const needFetch = pending.filter((g) => g.new_adhoc_code === undefined || g.Area_Name === undefined || g.Block === undefined || g.ID === undefined);
+  const attrsById = needFetch.length
+    ? await fetchNameFields(url, token, [...new Set(needFetch.map((g) => g.parentObjectId))])
+    : new Map();
+  for (const g of pending) {
+    const a = attrsById.get(g.parentObjectId) || {};
+    g.new_adhoc_code = clean(g.new_adhoc_code ?? a.new_adhoc_code);
+    g.Area_Name = clean(g.Area_Name ?? a.Area_Name);
+    g.Block = clean(g.Block ?? a.Block);
+    g.ID = clean(g.ID ?? a.ID);
+  }
+
+  // a code is "duplicated" if another outlet in this run, or an outlet saved earlier, already uses it
+  const uses = new Map();
+  for (const g of pending) {
+    if (g.new_adhoc_code) uses.set(g.new_adhoc_code, (uses.get(g.new_adhoc_code) || 0) + 1);
+  }
+  const taken = new Set([...Object.values(saved), ...groups.map((g) => g.folderName).filter(Boolean)]);
+
+  for (const g of pending) {
+    let name;
+    if (g.new_adhoc_code) {
+      name = uses.get(g.new_adhoc_code) > 1 || taken.has(g.new_adhoc_code)
+        ? `${g.new_adhoc_code}`
+        : g.new_adhoc_code;
+    } else {
+      const parts = [g.Area_Name, g.Block, g.ID].filter(Boolean);
+      name = [...(parts.length ? parts : [`OBJECTID_${g.parentObjectId}`])].join("_");
+    }
+    g.folderName = sanitizeName(name);
+    saved[g.parentObjectId] = g.folderName;
+    changed = true;
+  }
+
+  if (changed && save) saveNames(file, saved);
+  return groups;
+};
 
 // File name in Drive: <customer_code>_<keywords>_<attachmentId>.jpg
 const photoFileName = (outletName, att) => {
@@ -198,6 +328,56 @@ const verifyRootFolder = async (drive, folderId) => {
     }
     throw explainError(err, "Checking root folder");
   }
+};
+
+export const driveFolderLink = (folderId) => `https://drive.google.com/drive/folders/${folderId}`;
+
+// Folders already known to be "anyone with the link can view" (saves Drive calls)
+const sharedFolders = new Set();
+
+/**
+ * Makes a folder viewable by anyone who has its link (view only, not listed or searchable).
+ * Photos inside inherit this. Does nothing if the folder is already shared that way.
+ * @returns {Promise<boolean>} true if it changed the sharing, false if it was already shared
+ */
+export const shareFolderByLink = async (drive, folderId) => {
+  if (sharedFolders.has(folderId)) return false;
+
+  const { data } = await withRetry(() =>
+    drive.permissions.list({ fileId: folderId, fields: "permissions(type, role)", supportsAllDrives: true })
+  );
+  const already = (data.permissions || []).some((p) => p.type === "anyone");
+  if (!already) {
+    await withRetry(() =>
+      drive.permissions.create({
+        fileId: folderId,
+        requestBody: { type: "anyone", role: "reader", allowFileDiscovery: false },
+        supportsAllDrives: true,
+      })
+    );
+  }
+  sharedFolders.add(folderId);
+  return !already;
+};
+
+/** Shares many folders (a few at a time). @returns {{ shared: number, alreadyShared: number, failed: Array }} */
+export const shareFoldersByLink = async (folderIds, { drive: driveClient, concurrency = 5 } = {}) => {
+  const drive = driveClient || getDriveClient();
+  const result = { shared: 0, alreadyShared: 0, failed: [] };
+  const queue = [...new Set(folderIds)];
+  const worker = async () => {
+    while (queue.length) {
+      const id = queue.shift();
+      try {
+        if (await shareFolderByLink(drive, id)) result.shared++;
+        else result.alreadyShared++;
+      } catch (err) {
+        result.failed.push({ folderId: id, error: explainError(err, "Sharing folder").message });
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
+  return result;
 };
 
 // `cache` (one per run) stops two parallel workers creating the same folder twice
@@ -364,6 +544,7 @@ export const uploadAttachmentsToDrive = async ({
     uploaded: 0,
     skipped: 0,
     failed: [],
+    outletFolders: [], // one entry per outlet whose photos were all handled: { parentObjectId, name, id, link, complete }
     aborted: false,
     abortReason: null,
     stopped: false,
@@ -377,6 +558,7 @@ export const uploadAttachmentsToDrive = async ({
   if (!url) {
     throw new DriveUploadError(`ArcGIS URL is missing for ${project}/${layer} in config/.env.`, 500);
   }
+  await assignOutletFolderNames({ groups: attachmentGroups, layer, project, url, token });
 
   await verifyRootFolder(drive, rootId);
   const folderCache = new Map();
@@ -415,6 +597,7 @@ export const uploadAttachmentsToDrive = async ({
 
       let outletFolderId;
       let existing;
+      let outletFailed = 0;
       try {
         outletFolderId = await findOrCreateFolder(drive, outletName, layerFolderId, folderCache);
         existing = await listFileNames(drive, outletFolderId);
@@ -455,6 +638,7 @@ export const uploadAttachmentsToDrive = async ({
                 parents: [outletFolderId],
                 description: [
                   `customer_code: ${group.customer_code ?? ""}`,
+                  `folder: ${outletName}`,
                   `VIP_Contract: ${group.VIP_Contract ?? ""}`,
                   `OBJECTID: ${group.parentObjectId}`,
                   `attachment_id: ${att.id}`,
@@ -472,9 +656,29 @@ export const uploadAttachmentsToDrive = async ({
           const e = explainError(err, `Attachment ${att.id}`);
           if (e.fatal) return abort(e);
           summary.failed.push({ outlet: outletName, attachmentId: att.id, error: e.message });
+          outletFailed++;
         }
         onProgress(summary);
       }
+
+      // anyone with the link can open the folder (view only). A sharing problem is reported, it does not stop the upload.
+      let shared = true;
+      try {
+        await shareFolderByLink(drive, outletFolderId);
+      } catch (err) {
+        shared = false;
+        const e = explainError(err, `Sharing folder ${outletName}`);
+        if (!summary.shareError) summary.shareError = e.message;
+      }
+
+      summary.outletFolders.push({
+        parentObjectId: group.parentObjectId,
+        name: outletName,
+        id: outletFolderId,
+        link: driveFolderLink(outletFolderId),
+        complete: outletFailed === 0,
+        shared,
+      });
     },
     () => {
       if (!summary.aborted && shouldStop()) summary.stopped = true;
@@ -483,6 +687,52 @@ export const uploadAttachmentsToDrive = async ({
   );
 
   return summary;
+};
+
+/* ================= Existing outlet folders (name -> folder id) ================ */
+
+/**
+ * Outlet folders that already exist in Drive for a layer.
+ * @returns {Promise<Map<string, string>>} folder name -> folder id (empty if the layer folder does not exist)
+ */
+export const listOutletFolders = async ({ layer, project, rootFolderId, layerName, drive: driveClient }) => {
+  const drive = driveClient || getDriveClient();
+  const rootId = getDriveRootFolderId(rootFolderId);
+  const { url } = await getLayersConfig(layer, project);
+  const layerFolderName = sanitizeName(layerName || layerNameFromUrl(url));
+  const folders = new Map();
+
+  try {
+    const { data: layerRes } = await withRetry(() =>
+      drive.files.list({
+        q: `name = '${escapeQ(layerFolderName)}' and mimeType = '${FOLDER_MIME}' and '${rootId}' in parents and trashed = false`,
+        fields: "files(id)",
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      })
+    );
+    const layerFolderId = layerRes.files?.[0]?.id;
+    if (!layerFolderId) return folders;
+
+    let pageToken;
+    do {
+      const { data } = await withRetry(() =>
+        drive.files.list({
+          q: `'${layerFolderId}' in parents and mimeType = '${FOLDER_MIME}' and trashed = false`,
+          fields: "nextPageToken, files(id, name)",
+          pageSize: 1000,
+          pageToken,
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true,
+        })
+      );
+      for (const f of data.files || []) if (!folders.has(f.name)) folders.set(f.name, f.id);
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+    return folders;
+  } catch (err) {
+    throw explainError(err, "Reading existing Drive folders");
+  }
 };
 
 /* ================= One-time: skip what is already in Drive ================ */
@@ -514,7 +764,8 @@ export const removeAlreadyUploaded = async ({
 
   const drive = driveClient || getDriveClient();
   const rootId = getDriveRootFolderId(rootFolderId);
-  const { url } = await getLayersConfig(layer, project);
+  const { url, token } = await getLayersConfig(layer, project);
+  await assignOutletFolderNames({ groups, layer, project, url, token });
   const layerFolderName = sanitizeName(layerName || layerNameFromUrl(url));
 
   try {

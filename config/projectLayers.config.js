@@ -88,15 +88,33 @@ export const getLayersConfig = async (layer, project) => {
 
     }
 
-
     if (project == "ksa") {
-        if (layer === "census") {
+        if(layer === "census"){
             return {
                 url: process.env.KSA_SERVICE_FEATURE_SERVER,
-                token: process.env.KSA_SERVICE_TOKEN,
-            };
+                token:process.env.KSA_SERVICE_TOKEN
+            }
         }
     }
+    
+    if (project == "flour") {
+        if(layer === "scan"){
+            return {
+                url: process.env.FLOUR_SERVICE_FEATURE_SERVER,
+                token:process.env.FLOUR_SERVICE_TOKEN
+            }
+        }
+    }
+    
+    if (project == "fieldCheck") {
+        if(layer === "scan"){
+            return {
+                url: process.env.FIELD_CHECK_FEATURE_SERVER,
+                token:process.env.FIELD_CHECK_SERVICE_TOKEN
+            }
+        }
+    }
+
 
     throw new Error(`Invalid project/layer: ${project}/${layer}`);
 }

@@ -5,7 +5,7 @@ import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { arcgisGet, arcgisPost } from "../../utils/arcgis/arcgisGet.js";
 import { queryFeaturesService } from "./map.service.js";
 import { getAttachmentsService } from "./checkData.service.js";
-import { uploadAttachmentsToDrive } from "./driveUpload.service.js";
+import { assignOutletFolderNames, driveFolderLink, listOutletFolders, shareFoldersByLink, uploadAttachmentsToDrive } from "./driveUpload.service.js";
 
 /**
  * ArcGIS Online feature layer webhook -> upload the changed outlets' photos to Drive.
@@ -223,6 +223,143 @@ const getChangedObjectIds = async ({ item, layerUrl, token }) => {
   return { objectIds: [...objectIds], objectIdField };
 };
 
+/* ====================== LinkGoogleDrive on the layer ===================== */
+
+const LINK_FIELD = "LinkGoogleDrive";
+const linkFieldReady = new Set(); // layer urls where the field is known to exist
+
+// ".../rest/services/X/FeatureServer/1" -> ".../rest/admin/services/X/FeatureServer/1"
+const adminLayerUrl = (layerUrl) => layerUrl.replace(/\/rest\/services\//i, "/rest/admin/services/");
+
+// Creates the LinkGoogleDrive text column on the layer if it is not there yet
+const ensureLinkField = async (layerUrl, token) => {
+  if (linkFieldReady.has(layerUrl)) return;
+
+  const { data: info } = await arcgisGet(layerUrl, { f: "json", token });
+  if (info?.error) throw new Error(`ArcGIS layer info: ${info.error.message || info.error.code}`);
+
+  const exists = (info.fields || []).some((f) => f.name.toLowerCase() === LINK_FIELD.toLowerCase());
+  if (!exists) {
+    const { data } = await arcgisPost(`${adminLayerUrl(layerUrl)}/addToDefinition`, {
+      f: "json",
+      token,
+      addToDefinition: {
+        fields: [
+          { name: LINK_FIELD, alias: "Link Google Drive", type: "esriFieldTypeString", length: 500, nullable: true, editable: true },
+        ],
+      },
+    });
+    if (data?.error || data?.success === false) {
+      throw new Error(
+        `Could not add the ${LINK_FIELD} column (the token needs owner/admin rights on the service): ${data?.error?.message || "unknown error"}`
+      );
+    }
+    console.log(`[webhook] Added column ${LINK_FIELD} to ${layerUrl}`);
+  }
+  linkFieldReady.add(layerUrl);
+};
+
+/**
+ * Writes each outlet's Drive folder link into LinkGoogleDrive.
+ * Outlets whose link is already the same are not edited - otherwise our own edit
+ * would trigger the webhook again and again.
+ * @returns {{ updated: number, unchanged: number, failed: Array }}
+ */
+export const saveFolderLinks = async ({ layerUrl, token, objectIdField, folders, outlets, dryRun = false }) => {
+  const result = { updated: 0, unchanged: 0, failed: [] };
+  const oidKey = (attrs = {}) => Object.keys(attrs).find((k) => k.toLowerCase() === objectIdField.toLowerCase());
+
+  const currentLink = new Map();
+  for (const o of outlets) {
+    const a = o.attributes || {};
+    const linkKey = Object.keys(a).find((k) => k.toLowerCase() === LINK_FIELD.toLowerCase());
+    currentLink.set(Number(a[oidKey(a)]), linkKey ? a[linkKey] : undefined);
+  }
+
+  const updates = [];
+  for (const f of folders) {
+    if (!f.id || !f.complete) continue; // only link outlets whose photos are all in Drive
+    if (currentLink.get(Number(f.parentObjectId)) === f.link) {
+      result.unchanged++;
+      continue;
+    }
+    updates.push({ attributes: { [objectIdField]: f.parentObjectId, [LINK_FIELD]: f.link } });
+  }
+  if (!updates.length) return result;
+  if (dryRun) {
+    result.wouldUpdate = updates.length;
+    return result;
+  }
+
+  await ensureLinkField(layerUrl, token);
+
+  const BATCH = 200;
+  for (let i = 0; i < updates.length; i += BATCH) {
+    const batch = updates.slice(i, i + BATCH);
+    const { data } = await arcgisPost(`${layerUrl}/applyEdits`, { f: "json", token, updates: batch });
+    if (data?.error) throw new Error(`ArcGIS applyEdits: ${data.error.message || data.error.code}`);
+    for (const r of data.updateResults || []) {
+      if (r.success) result.updated++;
+      else result.failed.push({ objectId: r.objectId, error: r.error?.description || "update failed" });
+    }
+  }
+  return result;
+};
+
+/**
+ * Fills LinkGoogleDrive for outlets whose Drive folder already exists
+ * (uploaded before the link feature). Folder name is worked out the same way as
+ * for uploads: customer_code, new_adhoc_code, or Area_Name_Block_ID.
+ * dryRun=true only reports what would change.
+ */
+export const backfillFolderLinks = async ({ project, layer, rootFolderId, layerName, dryRun = true }) => {
+  const { url: layerUrl, token } = await getLayersConfig(layer, project);
+  if (!layerUrl) throw new Error(`ArcGIS URL is missing for ${project}/${layer}`);
+  const { objectIdField } = await getLayerInfo(layerUrl, token);
+
+  const data = await queryFeaturesService([layer], project, { where: "1=1", outFields: "*", returnGeometry: "false" });
+  const outlets = data[layer]?.features || [];
+
+  // one pseudo group per outlet, so the folder name rules are the same as for uploads
+  const groups = outlets.map((o) => ({
+    parentObjectId: o.attributes?.[objectIdField],
+    customer_code: o.attributes?.customer_code,
+    new_adhoc_code: o.attributes?.new_adhoc_code,
+    Area_Name: o.attributes?.Area_Name,
+    Block: o.attributes?.Block,
+    ID: o.attributes?.ID,
+  }));
+  await assignOutletFolderNames({ groups, layer, project, url: layerUrl, token, save: false });
+
+  const driveFolders = await listOutletFolders({ layer, project, rootFolderId, layerName });
+
+  const folders = [];
+  const notInDrive = [];
+  for (const g of groups) {
+    const id = driveFolders.get(g.folderName);
+    if (id) folders.push({ parentObjectId: g.parentObjectId, id, link: driveFolderLink(id), complete: true });
+    else notInDrive.push(g.folderName);
+  }
+
+  const links = await saveFolderLinks({ layerUrl, token, objectIdField, folders, outlets, dryRun });
+
+  // make every folder open for anyone with the link (view only); skipped in a dry run
+  const sharing = dryRun ? "not changed (dry run)" : await shareFoldersByLink(folders.map((f) => f.id));
+
+  return {
+    project,
+    layer,
+    dryRun,
+    outlets: outlets.length,
+    foldersInDrive: driveFolders.size,
+    outletsWithFolder: folders.length,
+    outletsWithoutFolder: notInDrive.length,
+    sampleWithoutFolder: notInDrive.slice(0, 20),
+    links,
+    sharing,
+  };
+};
+
 /* =============================== Processing ============================== */
 
 const processWebhookItem = async ({ project, layer, item }) => {
@@ -263,6 +400,16 @@ const processWebhookItem = async ({ project, layer, item }) => {
   // 4) Upload; photos already in the outlet's Drive folder are skipped
   const summary = await uploadAttachmentsToDrive({ attachmentGroups, layer, project });
 
+  // 5) Put each outlet's Drive folder link in the layer (LinkGoogleDrive column).
+  // A problem here must not hide the photo result, so it is only reported in the log.
+  let links;
+  try {
+    links = await saveFolderLinks({ layerUrl, token, objectIdField, folders: summary.outletFolders, outlets });
+  } catch (err) {
+    console.error(`[webhook] ${project}/${layer} could not save folder links:`, err.message);
+    links = { error: err.message };
+  }
+
   return logEvent({
     project,
     layer,
@@ -274,6 +421,8 @@ const processWebhookItem = async ({ project, layer, item }) => {
     uploaded: summary.uploaded,
     alreadyInDrive: summary.skipped,
     failed: summary.failed,
+    driveLinks: links,
+    shareError: summary.shareError,
     error: summary.abortReason || undefined,
     ms: Date.now() - started,
   });

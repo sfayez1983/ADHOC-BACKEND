@@ -45,6 +45,11 @@ checkDataRouter.get("/attachment/drive",
     asyncHandler(checkDataController.listDriveUploadJobsCon)
 )
 
+//fill LinkGoogleDrive for folders uploaded earlier (dryRun=true by default)
+checkDataRouter.post("/attachment/drive/links",
+    asyncHandler(checkDataController.backfillDriveLinksCon)
+)
+
 //upload job status
 checkDataRouter.get("/attachment/drive/:jobId",
     asyncHandler(checkDataController.getDriveUploadJobCon)
