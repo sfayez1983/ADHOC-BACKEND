@@ -17,15 +17,15 @@ export const signup = async (req, res, next) => {
 
 //login
 export const login = async (req, res, next) => {
-    const { email, password } = req.body;
+    const { email, password, client } = req.body;
 
     //check existince 
     const userExist = await User.findOne({ email });
-    if (!userExist) return res.status(400).json({ message: "email or password is invalid" });
+    if (!userExist) return res.status(400).json({ message: "email  is invalid" });
 
     const isPasswordValid = await comparePassword(password, userExist.password);
-    if (!isPasswordValid) return res.status(400).json({ message: "email or password is invalid" });
-
+    if (!isPasswordValid) return res.status(400).json({ message: " password is invalid" });
+    if(client !== userExist.client) return res.status(400).json({ message: "CLIENT is invalid" });
     //prepare data 
     const access_token = generateToken({
         payload: { _id: userExist._id },
