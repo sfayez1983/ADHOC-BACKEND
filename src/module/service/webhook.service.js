@@ -421,6 +421,8 @@ const processWebhookItem = async ({ project, layer, item }) => {
     uploaded: summary.uploaded,
     alreadyInDrive: summary.skipped,
     failed: summary.failed,
+    allPhotosUploaded: summary.allUploaded,
+    retryRounds: summary.retriedRounds,
     driveLinks: links,
     shareError: summary.shareError,
     error: summary.abortReason || undefined,

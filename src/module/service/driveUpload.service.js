@@ -110,8 +110,8 @@ const clean = (v) => String(v ?? "").trim();
 
 // Folder name for an outlet (set by assignOutletFolderNames before any upload):
 //   1) customer_code
-//   2) new_adhoc_code            (used by several outlets -> <new_adhoc_code>_<nanoid>)
-//   3) <Area_Name>_<Block>_<ID>_<nanoid>
+//   2) new_adhoc_code            (used by several outlets -> <new_adhoc_code>)
+//   3) <Area_Name>_<Block_No>_<Shop_Code>
 const outletFolderName = (group) =>
   sanitizeName(group.folderName || clean(group.customer_code) || `OBJECTID_${group.parentObjectId}`);
 
@@ -136,9 +136,9 @@ const saveNames = (file, names) => {
   fs.renameSync(`${file}.tmp`, file);
 };
 
-// new_adhoc_code / Area_Name / Block / ID of the outlets, from ArcGIS (the attachment groups only carry customer_code).
+// new_adhoc_code / Area_Name / Block_No / Shop_Code of the outlets, from ArcGIS (the attachment groups only carry customer_code).
 // Only fields that exist on the layer are requested (a missing field makes ArcGIS reject the whole query).
-const NAME_FIELDS = ["new_adhoc_code", "Area_Name", "Block", "ID"];
+const NAME_FIELDS = ["new_adhoc_code", "Area_Name", "Block_No", "Shop_Code"];
 
 const fetchNameFields = async (url, token, objectIds) => {
   const byId = new Map();
@@ -199,7 +199,7 @@ export const assignOutletFolderNames = async ({ groups = [], layer, project, url
   if (!pending.length) return groups;
 
   // only ask ArcGIS when the groups do not already carry the fields (see getAttachmentsService)
-  const needFetch = pending.filter((g) => g.new_adhoc_code === undefined || g.Area_Name === undefined || g.Block === undefined || g.ID === undefined);
+  const needFetch = pending.filter((g) => g.new_adhoc_code === undefined || g.Area_Name === undefined || g.Block_No === undefined || g.Shop_Code === undefined);
   const attrsById = needFetch.length
     ? await fetchNameFields(url, token, [...new Set(needFetch.map((g) => g.parentObjectId))])
     : new Map();
@@ -207,8 +207,8 @@ export const assignOutletFolderNames = async ({ groups = [], layer, project, url
     const a = attrsById.get(g.parentObjectId) || {};
     g.new_adhoc_code = clean(g.new_adhoc_code ?? a.new_adhoc_code);
     g.Area_Name = clean(g.Area_Name ?? a.Area_Name);
-    g.Block = clean(g.Block ?? a.Block);
-    g.ID = clean(g.ID ?? a.ID);
+    g.Block_No = clean(g.Block_No ?? a.Block_No);
+    g.Shop_Code = clean(g.Shop_Code ?? a.Shop_Code);
   }
 
   // a code is "duplicated" if another outlet in this run, or an outlet saved earlier, already uses it
@@ -225,7 +225,7 @@ export const assignOutletFolderNames = async ({ groups = [], layer, project, url
         ? `${g.new_adhoc_code}`
         : g.new_adhoc_code;
     } else {
-      const parts = [g.Area_Name, g.Block, g.ID].filter(Boolean);
+      const parts = [g.Area_Name, g.Block_No, g.Shop_Code].filter(Boolean);
       name = [...(parts.length ? parts : [`OBJECTID_${g.parentObjectId}`])].join("_");
     }
     g.folderName = sanitizeName(name);
@@ -531,6 +531,7 @@ export const uploadAttachmentsToDrive = async ({
   doneIds = new Set(),
   onUploaded = () => {},
   shouldStop = () => false,
+  retryRounds = 5, // extra passes over outlets that still have failed photos
   drive: driveClient, // optional, for tests
 }) => {
   const isDone = (att) => doneIds.has(String(att.id));
@@ -545,6 +546,8 @@ export const uploadAttachmentsToDrive = async ({
     skipped: 0,
     failed: [],
     outletFolders: [], // one entry per outlet whose photos were all handled: { parentObjectId, name, id, link, complete }
+    retriedRounds: 0,
+    allUploaded: false, // true only when every photo is in Drive (after the retries)
     aborted: false,
     abortReason: null,
     stopped: false,
@@ -581,10 +584,7 @@ export const uploadAttachmentsToDrive = async ({
   };
 
   // 2) One folder per outlet, processed a few at a time
-  await runPool(
-    attachmentGroups,
-    concurrency,
-    async (group) => {
+  const processGroup = async (group) => {
       const outletName = outletFolderName(group);
       const infos = group.attachmentInfos || [];
 
@@ -671,6 +671,8 @@ export const uploadAttachmentsToDrive = async ({
         if (!summary.shareError) summary.shareError = e.message;
       }
 
+      // a retry round replaces the outlet's earlier entry
+      summary.outletFolders = summary.outletFolders.filter((f) => f.parentObjectId !== group.parentObjectId);
       summary.outletFolders.push({
         parentObjectId: group.parentObjectId,
         name: outletName,
@@ -679,12 +681,47 @@ export const uploadAttachmentsToDrive = async ({
         complete: outletFailed === 0,
         shared,
       });
-    },
-    () => {
-      if (!summary.aborted && shouldStop()) summary.stopped = true;
-      return summary.aborted || summary.stopped;
+  };
+
+  const stopCheck = () => {
+    if (!summary.aborted && shouldStop()) summary.stopped = true;
+    return summary.aborted || summary.stopped;
+  };
+
+  // Wait between rounds, but react quickly when the server is shutting down
+  const waitBeforeRetry = async (ms) => {
+    for (let waited = 0; waited < ms && !stopCheck(); waited += 1000) await sleep(1000);
+  };
+
+  // Pass 1 = every outlet. Then, while some photos failed, retry ONLY those photos
+  // (5s, 15s, 45s, 2min, 2min between rounds). Photos already in Drive are never uploaded twice.
+  let toRun = attachmentGroups;
+  for (let round = 0; ; round++) {
+    await runPool(toRun, concurrency, processGroup, stopCheck);
+
+    if (stopCheck() || !summary.failed.length || round >= retryRounds) break;
+
+    const failedIds = new Set(summary.failed.map((f) => String(f.attachmentId)));
+    toRun = attachmentGroups
+      .filter((g) => (g.attachmentInfos || []).some((a) => failedIds.has(String(a.id))))
+      .map((g) => ({ ...g, attachmentInfos: g.attachmentInfos.filter((a) => failedIds.has(String(a.id))) }));
+
+    const delay = Math.min(5000 * 3 ** round, 120_000);
+    console.warn(
+      `[drive] ${project}/${layer}: ${failedIds.size} photos in ${toRun.length} outlets failed - retry ${round + 1}/${retryRounds} in ${delay / 1000}s`
+    );
+    summary.failed = []; // rebuilt by the next round with whatever still fails
+    summary.retriedRounds = round + 1;
+    await waitBeforeRetry(delay);
+    if (stopCheck()) {
+      // stopped while waiting: keep the failures that were still open
+      summary.failed = [...failedIds].map((id) => ({ attachmentId: id, error: "Stopped before the retry" }));
+      break;
     }
-  );
+  }
+
+  summary.allUploaded = !summary.failed.length && !summary.aborted && !summary.stopped;
+  if (summary.allUploaded) console.log(`[drive] ${project}/${layer}: all ${total} photos are in Drive`);
 
   return summary;
 };

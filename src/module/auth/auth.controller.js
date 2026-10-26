@@ -21,11 +21,11 @@ export const login = async (req, res, next) => {
 
     //check existince 
     const userExist = await User.findOne({ email });
-    if (!userExist) return res.status(400).json({ message: "email  is invalid" });
+    if (!userExist) return res.status(400).json({ message: "email or password is invalid" });
 
     const isPasswordValid = await comparePassword(password, userExist.password);
-    if (!isPasswordValid) return res.status(400).json({ message: " password is invalid" });
-    if(client !== userExist.client) return res.status(400).json({ message: "CLIENT is invalid" });
+    if (!isPasswordValid) return res.status(400).json({ message: "email or password is invalid" });
+    if(client !== userExist.client) return res.status(400).json({ message: "email or password is invalid" });
     //prepare data 
     const access_token = generateToken({
         payload: { _id: userExist._id },

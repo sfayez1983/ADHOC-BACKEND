@@ -262,8 +262,8 @@ export const getAttachmentsService = async (objectIds, outlet, layers, project) 
         // (undefined = field was not requested, so the Drive upload reads it from ArcGIS itself)
         new_adhoc_code: attrs?.new_adhoc_code,
         Area_Name: attrs?.Area_Name,
-        Block: attrs?.Block,
-        ID: attrs?.ID,
+        Block_No: attrs?.Block_No,
+        Shop_Code: attrs?.Shop_Code,
         VIP_Contract: attrs?.VIP_Contract ?? null,
       };
     });
