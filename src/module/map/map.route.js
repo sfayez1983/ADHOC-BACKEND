@@ -4,7 +4,7 @@ import * as mapController from "./map.controller.js";
 import { isAuthenticate } from '../../middleware/authentication.js';
 import { asyncHandler } from '../../middleware/asyncHandler.js';
 import { isAuthorized } from '../../middleware/authorizetion.js';
-import { USER_ROLES } from '../../common/constant/user.constant.js';
+import { USER_COMPANY, USER_ROLES } from '../../common/constant/user.constant.js';
 
 const mapServerRouter = Router()
 
@@ -24,7 +24,7 @@ mapServerRouter.get(
 )
 
 //only admin and developer can access those two routes
-// mapServerRouter.use(isAuthorized([USER_ROLES.ADMIN, USER_ROLES.DEVELOPER]))
+// mapServerRouter.use(isAuthorized([USER_ROLES.ADMIN, USER_ROLES.DEVELOPER],[USER_COMPANY.ADHOC]))
 
 // Layer information
 mapServerRouter.get(
