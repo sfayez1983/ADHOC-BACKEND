@@ -5,7 +5,7 @@ import appServer from './src/server.js';
 import { startNgrokTunnel } from './src/utils/ngrok/startTunnel.js';
 // import connectDb from './src/db/connection.js'
 const app = express()
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 
 //use config package to read .env file
 dotenv.config({ path: './config/.env', quiet: true })

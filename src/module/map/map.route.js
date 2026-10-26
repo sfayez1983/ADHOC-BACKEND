@@ -9,7 +9,7 @@ import { USER_COMPANY, USER_ROLES } from '../../common/constant/user.constant.js
 const mapServerRouter = Router()
 
 //all routes are protected by authentication middleware
-// mapServerRouter.use(isAuthenticate())
+mapServerRouter.use(isAuthenticate())
 
 // Layer information
 mapServerRouter.get(
@@ -24,7 +24,7 @@ mapServerRouter.get(
 )
 
 //only admin and developer can access those two routes
-// mapServerRouter.use(isAuthorized([USER_ROLES.ADMIN, USER_ROLES.DEVELOPER],[USER_COMPANY.ADHOC]))
+mapServerRouter.use(isAuthorized([USER_ROLES.ADMIN, USER_ROLES.DEVELOPER],[USER_COMPANY.ADHOC]))
 
 // Layer information
 mapServerRouter.get(
