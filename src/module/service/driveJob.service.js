@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
+import { DATA_DIR } from "../../utils/dataDir.js";
 import { queryFeaturesService } from "./map.service.js";
 import { getAttachmentsService } from "./checkData.service.js";
 import { uploadAttachmentsToDrive } from "./driveUpload.service.js";
@@ -19,7 +20,7 @@ import { uploadAttachmentsToDrive } from "./driveUpload.service.js";
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const JOBS_DIR = path.resolve(__dirname, "../../../data/drive-jobs");
+const JOBS_DIR = path.join(DATA_DIR, "drive-jobs");
 const SAVE_EVERY_MS = 2000;
 
 const jobs = new Map(); // jobId -> job

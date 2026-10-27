@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { DATA_DIR } from "../../utils/dataDir.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { arcgisGet, arcgisPost } from "../../utils/arcgis/arcgisGet.js";
 import { queryFeaturesService } from "./map.service.js";
@@ -18,7 +19,7 @@ import { assignOutletFolderNames, driveFolderLink, listOutletFolders, shareFolde
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LOG_DIR = path.resolve(__dirname, "../../../data/webhooks");
+const LOG_DIR = path.join(DATA_DIR, "webhooks");
 const MAX_IN_MEMORY_EVENTS = 100;
 
 const RELEVANT_EVENTS = new Set([

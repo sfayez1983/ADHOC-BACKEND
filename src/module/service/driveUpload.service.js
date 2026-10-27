@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { DATA_DIR } from "../../utils/dataDir.js";
 import { arcgisPost } from "../../utils/arcgis/arcgisGet.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import {
@@ -118,7 +119,7 @@ const outletFolderName = (group) =>
 // Names that contain a random nanoid are saved here, so the same outlet gets the
 // same folder on the next run, a resume or a webhook call (no second folder / re-upload).
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const NAMES_DIR = path.resolve(__dirname, "../../../data/drive-folders");
+const NAMES_DIR = path.join(DATA_DIR, "drive-folders");
 const namesFile = (project, layer) =>
   path.join(NAMES_DIR, `${project}_${layer}`.replace(/[^a-z0-9_-]/gi, "-") + ".json");
 
@@ -233,7 +234,13 @@ export const assignOutletFolderNames = async ({ groups = [], layer, project, url
     changed = true;
   }
 
-  if (changed && save) saveNames(file, saved);
+  if (changed && save) {
+    try {
+      saveNames(file, saved);
+    } catch (err) {
+      console.warn(`[drive] Could not save folder names (${err.code || err.message}); continuing`);
+    }
+  }
   return groups;
 };
 
