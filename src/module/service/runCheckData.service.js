@@ -5,7 +5,7 @@ import { queryFeaturesService } from "./map.service.js";
 
 // Same steps as GET /api/checkData, shared by the endpoint and the weekly schedule.
 // Returns { layer, correct: true, message } or { layer, correct: false, count, checkedData, excelFile }.
-export const runCheckData = async (layer = "september", query = {}) => {
+export const runCheckData = async (layer = "october", query = {}) => {
     const layers = Array(layer)
     const data = await queryFeaturesService(layers, USER_COMPANY.REDBULL, query)
     const checkedData = await checkDataService.checkGlobalExpressionsService(data[layers].features, layer)

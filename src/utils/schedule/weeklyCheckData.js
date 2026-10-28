@@ -6,7 +6,8 @@ const escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "
 
 export const runWeeklyCheck = async () => {
     const layer = process.env.WEEKLY_CHECK_LAYER || "october"
-    const to = process.env.ADHOC_REPORT_TO || process.env.ADHOC_EMAIL
+    // sent from ADHOC_EMAIL; ADHOC_REPORT_TO (comma separated) overrides the default list
+    const to = process.env.ADHOC_REPORT_TO || "mohanadahmed266@gmail.com, sfayez@adhoc-eg.com"
     try {
         const result = await runCheckData(layer)
         const subject = result.correct
