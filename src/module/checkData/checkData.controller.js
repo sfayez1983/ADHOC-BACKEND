@@ -5,6 +5,7 @@ import { queryFeaturesService } from "../service/map.service.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { getDriveClient, getDriveRootFolderId } from "../../../config/driveAPI.config.js";
 import { removeAlreadyUploaded } from "../service/driveUpload.service.js";
+import { runCheckData } from "../service/runCheckData.service.js";
 import { backfillFolderLinks } from "../service/webhook.service.js";
 import { getDriveUploadJob, listDriveUploadJobs, startDriveUploadJob, } from "../service/driveJob.service.js";
 
@@ -12,22 +13,12 @@ import { getDriveUploadJob, listDriveUploadJobs, startDriveUploadJob, } from "..
 // CHECK CALCULATION DATA
 // ==========================================
 export const checkCalculationDataCon = async (req, res, next) => {
-    //prepare data
-    const layers = Array(
-        req.query.layer || "september"
-    )
-    const project = USER_COMPANY.REDBULL
-
-    //get layer data
-    const data = await queryFeaturesService(layers, project, req.query);
-
-    //check if data was wrong
-    const checkedData = await checkDataService.checkGlobalExpressionsService(data[layers].features, req.query.layer);
-    // res.json(checkedData);
-    checkedData.differences = checkedData.wrongData
-    // res.json(checkedData.differences);
-    const excel = formatComparisonExcel(checkedData, req.query.layer, "expected", "actual", "compareData")
-    res.status(200).json({ checkedData, excel })
+    const result = await runCheckData(req.query.layer || "september", req.query)
+    // nothing wrong -> answer with the message only, no Excel is generated or uploaded
+    if (result.correct) {
+        return res.status(200).json(result.checkedData)
+    }
+    res.status(200).json({ checkedData: result.checkedData, excel: result.excelFile.link, excelFile: result.excelFile })
 }
 
 // ==========================================
@@ -52,8 +43,8 @@ export const compareDataCon = async (req, res) => {
         return res.status(200).json({ message: "all data are correct" })
     }
 
-    const excel = formatComparisonExcel(comparedData, req.query.layer, "excel", "portal", "compareData")
-    res.status(200).json({ comparedData, excel })
+    const excelFile = await formatComparisonExcel(comparedData, req.query.layer, "excel", "portal", "compareData")
+    res.status(200).json({ comparedData, excel: excelFile.link, excelFile })
 }
 
 // ==========================================
@@ -113,7 +104,7 @@ export const getAttachmentExcel = async (req, res) => {
     ).toLowerCase();
     const layers = layer === "all" ? MONTHS : [layer];
 
-    const project = USER_COMPANY.REDBULL
+    const project = req.query.project
     const data =
         await queryFeaturesService(
             layers,
@@ -136,13 +127,14 @@ export const getAttachmentExcel = async (req, res) => {
             attachments?.allAttachments || [],
             features
         )
-        const excel = formatAttachmentKeywordsExcel(keywordCounts, l)
+        const excelFile = await formatAttachmentKeywordsExcel(keywordCounts, l)
 
         results.push({
             layer: l,
             summary: keywordCounts.summary,
             keywordTotals: keywordCounts.totals,
-            excel,
+            excel: excelFile.link,
+            excelFile,
         });
     }
 

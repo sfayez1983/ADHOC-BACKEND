@@ -6,6 +6,7 @@ import webhookRouter from './module/webhook/webhook.route.js';
 import { globalErrorHandling } from './utils/error/globalErrorHandling.js';
 import * as driveJobs from './module/service/driveJob.service.js';
 import adminRouter from './module/admin/admin.route.js';
+import { startWeeklyCheckSchedule } from './utils/schedule/weeklyCheckData.js';
 /**
  * ============================================================
  * ArcGIS Backend - Main Server
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
 });
 
 connectDb()
+startWeeklyCheckSchedule()
 // ============================================================
 // ArcGIS REST API Routes
 // ============================================================

@@ -3,6 +3,23 @@ import { ExcelFile } from '../../db/model/excelFiles.js';
 import path from "path";
 import fs from "fs";
 import { nanoid } from "nanoid";
+import { uploadBufferToDrive } from "./driveUpload.service.js";
+
+// Excel reports go to Drive, not to the server's disk: <root>/Excel Reports/<partFolder>/<file>.xlsx
+const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const REPORTS_FOLDER = "Excel Reports";
+const shareReports = () => String(process.env.EXCEL_REPORTS_SHARE_BY_LINK ?? "true").toLowerCase() === "true";
+
+const saveWorkbookToDrive = async (workbook, fileName, partFolder) => {
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    return uploadBufferToDrive({
+        buffer,
+        fileName,
+        mimeType: XLSX_MIME,
+        folderPath: [REPORTS_FOLDER, partFolder],
+        shareByLink: shareReports(),
+    });
+};
 
 const buildMissingSheet = (items = []) => {
     // Pull the nested record, whichever key it uses
@@ -95,10 +112,7 @@ export const readExcel = async (filePath) => {
 }
 
 // ===== FROMAT COMPARISON EXCEL =====
-export const formatComparisonExcel = (comparedData, layer, expectedRow, portalRow, partFolder, mainFolder = 'uploads') => {
-
-    const uploadPath = path.resolve(`${mainFolder}/${partFolder}`);
-    fs.mkdirSync(uploadPath, { recursive: true });
+export const formatComparisonExcel = async (comparedData, layer, expectedRow, portalRow, partFolder) => {
 
     const workbook = XLSX.utils.book_new();
     // =========================
@@ -186,19 +200,13 @@ export const formatComparisonExcel = (comparedData, layer, expectedRow, portalRo
     // Save file
     // =========================
     const fileName = `comparison-${layer}-${Date.now()}-${nanoid()}.xlsx`;
-    const filePath = path.join(uploadPath, fileName);
 
-    XLSX.writeFile(workbook, filePath);
-
-    return filePath;
+    return saveWorkbookToDrive(workbook, fileName, partFolder);
 };
 
 // ===== ATTACHMENTS: PHOTOS PER KEYWORD EXCEL =====
 // keywordCounts: output of countAttachmentKeywordsService
-export const formatAttachmentKeywordsExcel = (keywordCounts, layer, partFolder = 'attachmentsCount', mainFolder = 'uploads') => {
-
-    const uploadPath = path.resolve(`${mainFolder}/${partFolder}`);
-    fs.mkdirSync(uploadPath, { recursive: true });
+export const formatAttachmentKeywordsExcel = async (keywordCounts, layer, partFolder = 'attachmentsCount') => {
 
     const { keywords = [], rows = [], totals = {} } = keywordCounts;
     const workbook = XLSX.utils.book_new();
@@ -255,9 +263,6 @@ export const formatAttachmentKeywordsExcel = (keywordCounts, layer, partFolder =
     // Save file
     // =========================
     const fileName = `attachments-keywords-${layer}-${Date.now()}-${nanoid()}.xlsx`;
-    const filePath = path.join(uploadPath, fileName);
 
-    XLSX.writeFile(workbook, filePath);
-
-    return filePath;
+    return saveWorkbookToDrive(workbook, fileName, partFolder);
 };

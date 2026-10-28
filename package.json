@@ -2,6 +2,9 @@
   "name": "arcgis-backend",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "scripts": {
     "start": "node index.js",
@@ -30,6 +33,8 @@
     "mongoose": "^9.9.3",
     "multer": "^2.4.0",
     "nanoid": "^6.0.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.2.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

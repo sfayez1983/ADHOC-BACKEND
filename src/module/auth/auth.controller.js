@@ -29,7 +29,7 @@ export const login = async (req, res, next) => {
     //prepare data 
     const access_token = generateToken({
         payload: { _id: userExist._id },
-        option: { expiresIn: "1h" }
+        option: { expiresIn: "2h" }
 
     })
     const refresh_token = generateToken({

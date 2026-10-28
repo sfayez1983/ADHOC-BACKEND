@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Readable } from "stream";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -731,6 +732,63 @@ export const uploadAttachmentsToDrive = async ({
   if (summary.allUploaded) console.log(`[drive] ${project}/${layer}: all ${total} photos are in Drive`);
 
   return summary;
+};
+
+/* ================= Any file (e.g. Excel reports) -> Drive ================ */
+
+/**
+ * Uploads an in-memory file to Drive: <root folder>/<folderPath...>/<fileName>.
+ * Nothing is written to the server's disk. The file is private to the Drive owner unless
+ * shareByLink is true (then anyone with the link can view it).
+ * @returns {Promise<{ id, name, link, folder }>}
+ */
+export const uploadBufferToDrive = async ({
+  buffer,
+  fileName,
+  mimeType = "application/octet-stream",
+  folderPath = [],
+  rootFolderId,
+  shareByLink = false,
+  drive: driveClient, // optional, for tests
+}) => {
+  const drive = driveClient || getDriveClient();
+  const rootId = getDriveRootFolderId(rootFolderId);
+
+  try {
+    const cache = new Map();
+    let parentId = rootId;
+    for (const name of folderPath) {
+      parentId = await findOrCreateFolder(drive, sanitizeName(name), parentId, cache);
+    }
+
+    const { data } = await withRetry(() =>
+      drive.files.create({
+        requestBody: { name: fileName, parents: [parentId] },
+        media: { mimeType, body: Readable.from([buffer]) },
+        fields: "id, name, webViewLink",
+        supportsAllDrives: true,
+      })
+    );
+
+    if (shareByLink) {
+      await withRetry(() =>
+        drive.permissions.create({
+          fileId: data.id,
+          requestBody: { type: "anyone", role: "reader", allowFileDiscovery: false },
+          supportsAllDrives: true,
+        })
+      );
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      link: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
+      folder: folderPath.join("/"),
+    };
+  } catch (err) {
+    throw explainError(err, `Uploading "${fileName}" to Drive`);
+  }
 };
 
 /* ================= Existing outlet folders (name -> folder id) ================ */

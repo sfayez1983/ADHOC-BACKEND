@@ -1,0 +1,79 @@
+# Render Blueprint: Render reads this file when you create the service from the repo.
+# Every "sync: false" variable is asked for in the Render dashboard (values are NOT stored here).
+services:
+  - type: web
+    name: adhoc-backend
+    runtime: node
+    plan: starter            # free spins down when idle: ArcGIS webhooks can time out
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NGROK_ENABLED   # Render already gives a public https URL
+        value: "false"
+      # Optional: attach a Render disk at /var/data and uncomment, to keep upload
+      # progress and logs between deploys.
+      # - key: DATA_DIR
+      #   value: /var/data
+      - key: DB_URL
+        sync: false
+      - key: saltOrRounds
+        sync: false
+      - key: ADHOC_EMAIL
+        sync: false
+      - key: ADHOCK_PASSWORD
+        sync: false
+      - key: ARCGIS_WEBHOOK_KEY
+        sync: false
+      - key: GOOGLE_DRIVE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_DRIVE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_DRIVE_REFRESH_TOKEN
+        sync: false
+      - key: GOOGLE_DRIVE_ROOT_FOLDER_ID
+        sync: false
+      - key: FIELD_CHECK_FEATURE_SERVER
+        sync: false
+      - key: FIELD_CHECK_SERVICE_TOKEN
+        sync: false
+      - key: FLOUR_SERVICE_FEATURE_SERVER
+        sync: false
+      - key: FLOUR_SERVICE_TOKEN
+        sync: false
+      - key: KSA_SERVICE_FEATURE_SERVER
+        sync: false
+      - key: KSA_SERVICE_TOKEN
+        sync: false
+      - key: GORILLA_SERVICE_FEATURE_SERVER
+        sync: false
+      - key: GORILLA_SERVICE_TOKEN
+        sync: false
+      - key: GORILLA_July_SERVER
+        sync: false
+      - key: GORILLA_AUGUST_SERVER
+        sync: false
+      - key: GORILLA_July_August_SERVICE_TOKEN
+        sync: false
+      - key: REDBULL_SERVICE_TOKEN
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_FEBRUARY
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_MARCH
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_APRIL
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_MAY
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_JUNE
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_JULY
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_AUGUST
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_SEPTEMPER
+        sync: false
+      - key: REDBULL_SERVICE_FEATURE_SERVER_OCTOBER
+        sync: false

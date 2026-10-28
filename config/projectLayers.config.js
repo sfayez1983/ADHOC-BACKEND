@@ -20,6 +20,13 @@ export const getLayersConfig = async (layer, project) => {
                 token: process.env.GORILLA_July_August_SERVICE_TOKEN,
             };
         }
+
+        if (layer === "october") {
+            return {
+                url: process.env.GORILLA_OCTOBER_SERVER,
+                token: process.env.GORILLA_OCTOBER_SERVICE_TOKEN,
+            };
+        }
     }
 
     if (project == "redbull") {
