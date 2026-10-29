@@ -36,7 +36,7 @@ const normalize = (value) => {
 // Numbers are compared with a tiny tolerance so float noise
 // (e.g. 0.30000000000000004 vs 0.3) is not reported as wrong.
 // ============================================================
-const isSameValue = (actual, expected) => {
+export const isSameValue = (actual, expected) => {
     const a = normalize(actual);
     const e = normalize(expected);
 
@@ -294,6 +294,8 @@ const getAttr = (attrs = {}, name) => {
 export const countAttachmentKeywordsService = (allAttachments = [], outlets = []) => {
   const keywordTotals = new Map();
   const rowsById = new Map();
+  // parentObjectId -> Map(photo name -> times it appears in that outlet)
+  const photoNamesById = new Map();
 
   // every outlet first (0 photos), in the layer's order
   for (const o of outlets) {
@@ -319,6 +321,28 @@ export const countAttachmentKeywordsService = (allAttachments = [], outlets = []
       row.counts[keyword] = (row.counts[keyword] || 0) + 1;
       row.total++;
       keywordTotals.set(keyword, (keywordTotals.get(keyword) || 0) + 1);
+
+      const photoName = String(att.name ?? "").trim();
+      if (photoName) {
+        let names = photoNamesById.get(group.parentObjectId);
+        if (!names) photoNamesById.set(group.parentObjectId, (names = new Map()));
+        names.set(photoName, (names.get(photoName) || 0) + 1);
+      }
+    }
+  }
+
+  // photo names used more than once inside the same outlet (one row per outlet + name)
+  const duplicates = [];
+  for (const [id, names] of photoNamesById) {
+    const row = rowsById.get(id);
+    for (const [name, times] of names) {
+      if (times < 2) continue;
+      duplicates.push({
+        customer_code: row.customer_code,
+        VIP_Contract: row.VIP_Contract,
+        field_code: row.field_code,
+        name,
+      });
     }
   }
 
@@ -332,12 +356,48 @@ export const countAttachmentKeywordsService = (allAttachments = [], outlets = []
     keywords,
     rows,
     totals: Object.fromEntries(keywords.map((k) => [k, keywordTotals.get(k)])),
+    duplicates,
     summary: {
       outlets: rows.length,
+      outletsWithDuplicatePhotos: new Set(duplicates.map((d) => d.customer_code)).size,
+      duplicatePhotoNames: duplicates.length,
       outletsWithPhotos: rows.filter((r) => r.total > 0).length,
       outletsWithoutPhotos: rows.filter((r) => r.total === 0).length,
       photos: rows.reduce((n, r) => n + r.total, 0),
       keywords: keywords.length,
     },
   };
+};
+
+// ==========================================
+// REMOVE DUPLICATE PHOTOS (same photo name twice in the same outlet)
+// ==========================================
+// allAttachments: output of getAttachmentsService. Keeps ONE photo per name in each outlet:
+// the one that has a keyword (else the first). Same rule as the "Duplicate Photos" Excel sheet.
+export const removeDuplicatePhotosService = (allAttachments = []) => {
+  let removed = 0;
+
+  const groups = allAttachments.map((group) => {
+    const infos = group.attachmentInfos || [];
+    const keepByName = new Map();
+
+    for (const att of infos) {
+      const name = String(att.name ?? "").trim();
+      if (!name) continue; // no name -> cannot tell, keep it
+      const kept = keepByName.get(name);
+      if (!kept || (!String(kept.keywords ?? "").trim() && String(att.keywords ?? "").trim())) {
+        keepByName.set(name, att);
+      }
+    }
+
+    const unique = infos.filter((att) => {
+      const name = String(att.name ?? "").trim();
+      return !name || keepByName.get(name) === att;
+    });
+
+    removed += infos.length - unique.length;
+    return unique.length === infos.length ? group : { ...group, attachmentInfos: unique };
+  });
+
+  return { groups, removed };
 };

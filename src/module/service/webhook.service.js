@@ -5,7 +5,7 @@ import { DATA_DIR } from "../../utils/dataDir.js";
 import { getLayersConfig } from "../../../config/projectLayers.config.js";
 import { arcgisGet, arcgisPost } from "../../utils/arcgis/arcgisGet.js";
 import { queryFeaturesService } from "./map.service.js";
-import { getAttachmentsService } from "./checkData.service.js";
+import { getAttachmentsService, removeDuplicatePhotosService } from "./checkData.service.js";
 import { assignOutletFolderNames, driveFolderLink, listOutletFolders, shareFoldersByLink, uploadAttachmentsToDrive } from "./driveUpload.service.js";
 
 /**
@@ -396,7 +396,9 @@ const processWebhookItem = async ({ project, layer, item }) => {
 
   // 3) Their attachments (photo url + name)
   const attachments = await getAttachmentsService(objectIds, outlets, [layer], project);
-  const attachmentGroups = attachments?.allAttachments || [];
+  // same photo name twice in one outlet -> upload it once
+  const { groups: attachmentGroups, removed: duplicatesRemoved } =
+    removeDuplicatePhotosService(attachments?.allAttachments || []);
 
   // 4) Upload; photos already in the outlet's Drive folder are skipped
   const summary = await uploadAttachmentsToDrive({ attachmentGroups, layer, project });
@@ -419,6 +421,7 @@ const processWebhookItem = async ({ project, layer, item }) => {
     objectIds,
     customerCodes: attachmentGroups.map((g) => g.customer_code),
     photos: summary.total,
+    duplicatesLeftOut: duplicatesRemoved,
     uploaded: summary.uploaded,
     alreadyInDrive: summary.skipped,
     failed: summary.failed,

@@ -208,7 +208,7 @@ export const formatComparisonExcel = async (comparedData, layer, expectedRow, po
 // keywordCounts: output of countAttachmentKeywordsService
 export const formatAttachmentKeywordsExcel = async (keywordCounts, layer, partFolder = 'attachmentsCount') => {
 
-    const { keywords = [], rows = [], totals = {} } = keywordCounts;
+    const { keywords = [], rows = [], totals = {}, duplicates = [] } = keywordCounts;
     const workbook = XLSX.utils.book_new();
 
     // =========================
@@ -258,6 +258,18 @@ export const formatAttachmentKeywordsExcel = async (keywordCounts, layer, partFo
     ]);
     totalsSheet["!cols"] = [{ wch: 35 }, { wch: 10 }, { wch: 26 }];
     XLSX.utils.book_append_sheet(workbook, totalsSheet, "Keyword Totals");
+
+    // =========================
+    // Duplicate photos (same photo name used more than once in the same outlet)
+    // =========================
+    const duplicatesSheet = XLSX.utils.aoa_to_sheet([
+        ["Customer Code", "VIP Contract", "Field Code", "Name"],
+        ...duplicates.map(d => [d.customer_code, d.VIP_Contract, d.field_code ?? "", d.name]),
+    ]);
+    duplicatesSheet["!cols"] = [{ wch: 15 }, { wch: 20 }, { wch: 14 }, { wch: 45 }];
+    duplicatesSheet["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: duplicates.length, c: 3 } }) };
+    duplicatesSheet["!freeze"] = { xSplit: 3, ySplit: 1 };
+    XLSX.utils.book_append_sheet(workbook, duplicatesSheet, "Duplicate Photos");
 
     // =========================
     // Save file

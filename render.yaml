@@ -8,15 +8,39 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /
+    # Keeps Drive upload progress, outlet folder names and webhook logs between deploys/restarts,
+    # so an interrupted upload continues where it stopped. (A disk needs a paid plan.)
+    disk:
+      name: adhoc-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 22
       - key: NGROK_ENABLED   # Render already gives a public https URL
         value: "false"
-      # Optional: attach a Render disk at /var/data and uncomment, to keep upload
-      # progress and logs between deploys.
-      # - key: DATA_DIR
-      #   value: /var/data
+      - key: DATA_DIR
+        value: /var/data
+      - key: GOOGLE_DRIVE_AUTO_RESUME   # continue unfinished Drive uploads after a restart
+        value: "true"
+      - key: EXCEL_REPORTS_SHARE_BY_LINK   # Excel reports in Drive open with the link
+        value: "true"
+      - key: WEEKLY_CHECK_ENABLED
+        value: "true"
+      - key: WEEKLY_CHECK_LAYER
+        value: october
+      - key: CALC_SYNC_ENABLED   # writes to the live layer, so it stays off until you set "true"
+        value: "false"
+      - key: ADHOC_REPORT_TO   # weekly report recipients, comma separated
+        sync: false
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "465"
+      - key: GORILLA_OCTOBER_SERVER
+        sync: false
+      - key: GORILLA_OCTOBER_SERVICE_TOKEN
+        sync: false
       - key: DB_URL
         sync: false
       - key: saltOrRounds
