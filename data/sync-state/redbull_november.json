@@ -1,0 +1,15 @@
+{
+  "lastRunStartedAt": 1793540901509,
+  "lastResult": {
+    "layer": "november",
+    "mode": "full",
+    "since": null,
+    "checked": 1691,
+    "toUpdate": 1501,
+    "unchanged": 190,
+    "updated": 1501,
+    "failed": [],
+    "retriedRounds": 0,
+    "ranAt": "2026-11-01T13:48:48.077Z"
+  }
+}

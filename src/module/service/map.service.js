@@ -132,7 +132,7 @@ const fetchCount = async (url, token, where) => {
 const querySingleFeatureLayerService = async (layer, project, query = {}) => {
 
   const { url, token } = await getLayersConfig(layer, project);
-
+  console.log("url: ", url, "token: ", token)
   //prepare queries data
   const where = query.where || "1=1";
   const returnGeometry = query.returnGeometry === "false" ? false : true;
