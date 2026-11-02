@@ -8,6 +8,7 @@ import * as driveJobs from './module/service/driveJob.service.js';
 import adminRouter from './module/admin/admin.route.js';
 import { startCalcSyncSchedule, startWeeklyCheckSchedule } from './utils/schedule/weeklyCheckData.js';
 import attachmentRouter from './module/attachment/attachment.route.js';
+import getGoogleDriveRouter from './module/getGoogleDriveData/getGoogleDrive.route.js';
 /**
  * ============================================================
  * ArcGIS Backend - Main Server
@@ -50,6 +51,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/checkData', checkDataRouter)
 app.use('/api/attachment', attachmentRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/googleDrive', getGoogleDriveRouter)
 // ArcGIS Online webhooks (photos -> Google Drive)
 app.use('/api/webhooks', webhookRouter)
 
